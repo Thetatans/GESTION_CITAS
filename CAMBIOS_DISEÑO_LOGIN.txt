@@ -1,0 +1,245 @@
+================================================================================
+    CAMBIOS EN EL DISEÑO DE LOGIN Y REGISTRO
+    Sistema de Gestión de Citas - Barbería
+================================================================================
+
+FECHA: Noviembre 2024
+ACTUALIZACIÓN: Nuevo esquema de colores
+
+================================================================================
+PALETA DE COLORES APLICADA
+================================================================================
+
+COLORES PRINCIPALES:
+--------------------
+🔵 Azul Oscuro: #1e3a5f
+   - Uso: Color principal, botones, títulos, bordes
+
+🟤 Café: #6b4423
+   - Uso: Gradiente complementario, acentos, hover effects
+
+🟡 Beige: #f5e6d3
+   - Uso: Fondo del formulario, contraste suave
+
+⚫ Gris: #495057
+   - Uso: Textos, etiquetas, elementos secundarios
+
+
+================================================================================
+ARCHIVOS MODIFICADOS
+================================================================================
+
+1. app/Views/layouts/auth.php
+   - Layout principal para login y registro
+   - Nuevos estilos CSS con paleta de colores
+   - Efectos visuales mejorados
+
+2. app/Views/auth/login.php
+   - Actualizada contraseña de prueba a "ilich123"
+   - Diseño automáticamente actualizado por el layout
+
+3. app/Views/auth/registro.php
+   - Diseño automáticamente actualizado por el layout
+
+
+================================================================================
+CARACTERÍSTICAS DEL NUEVO DISEÑO
+================================================================================
+
+FONDO (Body):
+-------------
+✓ Gradiente de azul oscuro a café
+✓ Patrón SVG decorativo con ondas
+✓ Efecto de profundidad y elegancia
+
+TARJETA DE AUTENTICACIÓN (.auth-card):
+--------------------------------------
+✓ Fondo blanco con bordes redondeados (20px)
+✓ Sombra profunda para efecto flotante
+✓ Máximo ancho: 650px
+✓ Responsive para móviles
+
+CABECERA (.auth-header):
+------------------------
+✓ Gradiente de azul oscuro a café
+✓ Texto blanco con sombra para legibilidad
+✓ Ícono de tijeras (barbería)
+✓ Efecto de onda en la parte inferior
+
+CUERPO DEL FORMULARIO (.auth-body):
+-----------------------------------
+✓ Fondo beige suave
+✓ Padding generoso para espaciado
+✓ Bordes redondeados en inputs
+
+CAMPOS DE FORMULARIO:
+---------------------
+✓ Bordes de 2px con color neutro
+✓ Bordes redondeados (10px)
+✓ Focus: Borde azul oscuro con sombra suave
+✓ Padding interno cómodo
+✓ Transiciones suaves en todos los estados
+
+BOTONES:
+--------
+✓ Gradiente de azul oscuro a café
+✓ Texto en mayúsculas con espaciado
+✓ Hover: Movimiento hacia arriba con sombra
+✓ Bordes redondeados
+✓ Iconos integrados
+
+ALERTAS:
+--------
+✓ Bordes redondeados (10px)
+✓ Sin bordes laterales
+✓ Colores estándar de Bootstrap para éxito/error
+
+ENLACES:
+--------
+✓ Color azul oscuro
+✓ Hover: Cambia a café
+✓ Transiciones suaves
+
+CHECKBOXES:
+-----------
+✓ Color azul oscuro cuando están marcados
+✓ Focus con sombra suave
+✓ Bordes personalizados
+
+CUADRO DE CREDENCIALES:
+-----------------------
+✓ Fondo blanco
+✓ Borde azul oscuro (2px)
+✓ Borde izquierdo café (5px) para acento
+✓ Texto gris
+
+
+================================================================================
+DISEÑO RESPONSIVE
+================================================================================
+
+MÓVIL (< 768px):
+----------------
+✓ Márgenes reducidos (1rem)
+✓ Padding del formulario ajustado
+✓ Tarjeta se adapta al ancho de pantalla
+✓ Formulario de dos columnas se convierte en una columna
+
+
+================================================================================
+EFECTOS Y ANIMACIONES
+================================================================================
+
+1. BOTONES:
+   - Hover: Elevación de 2px
+   - Hover: Sombra más pronunciada
+   - Transición suave de 0.3s
+
+2. INPUTS:
+   - Focus: Cambio de color de borde
+   - Focus: Sombra suave
+   - Fondo cambia a blanco al hacer focus
+
+3. ENLACES:
+   - Cambio de color suave en hover
+   - Transición de 0.3s
+
+4. FONDO:
+   - Gradiente fijo
+   - Patrón decorativo con ondas SVG
+
+
+================================================================================
+ACCESIBILIDAD
+================================================================================
+
+✓ Contraste adecuado entre texto y fondo
+✓ Etiquetas descriptivas en todos los campos
+✓ Iconos Bootstrap para mejora visual
+✓ Focus visible en todos los elementos interactivos
+✓ Textos legibles con tamaño apropiado
+
+
+================================================================================
+COMPARACIÓN ANTES VS DESPUÉS
+================================================================================
+
+ANTES:
+------
+- Gradiente morado/púrpura
+- Colores genéricos
+- Sin relación con la marca
+
+DESPUÉS:
+--------
+- Gradiente azul oscuro/café (marca barbería)
+- Beige para calidez y elegancia
+- Colores profesionales y coherentes
+- Mayor profundidad visual
+- Mejor experiencia de usuario
+
+
+================================================================================
+CREDENCIALES ACTUALIZADAS
+================================================================================
+
+Todas las credenciales de prueba ahora usan la contraseña: ilich123
+
+ADMINISTRADOR:
+Email: admin@barberia.com
+Contraseña: ilich123
+
+EMPLEADO:
+Email: empleado@barberia.com
+Contraseña: ilich123
+
+CLIENTE:
+Email: cliente@barberia.com
+Contraseña: ilich123
+
+
+================================================================================
+CÓMO VER LOS CAMBIOS
+================================================================================
+
+1. Asegúrate de que el servidor esté corriendo:
+   php spark serve
+
+2. Accede a:
+   http://localhost:8080/login
+
+3. Para ver el registro:
+   http://localhost:8080/registro
+
+4. Limpia la caché del navegador si no ves cambios:
+   Ctrl + F5 (Windows)
+   Cmd + Shift + R (Mac)
+
+
+================================================================================
+PRÓXIMAS MEJORAS SUGERIDAS
+================================================================================
+
+□ Añadir logo de la barbería en el header
+□ Implementar validación en tiempo real de campos
+□ Añadir indicador de fuerza de contraseña
+□ Animación de entrada de la tarjeta
+□ Efecto parallax en el fondo
+□ Modo oscuro opcional
+
+
+================================================================================
+NOTAS TÉCNICAS
+================================================================================
+
+- Variables CSS utilizadas para fácil mantenimiento
+- Todos los estilos están inline en el layout
+- Bootstrap 5.3.0 como framework base
+- Bootstrap Icons 1.10.0 para iconografía
+- Compatible con navegadores modernos
+- CSS Grid y Flexbox para layouts
+
+
+================================================================================
+                            FIN DE LA DOCUMENTACIÓN
+================================================================================
