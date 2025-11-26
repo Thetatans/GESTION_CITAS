@@ -120,7 +120,7 @@ class Auth extends BaseController
         // ========================================
         // PASO 3: VERIFICAR CREDENCIALES
         // ========================================
-        
+
         // Llamar al método del modelo que verifica email y password
         $usuario = $this->usuarioModel->verificarCredenciales($email, $password);
 
@@ -130,6 +130,32 @@ class Auth extends BaseController
             return redirect()->back()
                            ->withInput()
                            ->with('error', 'Email o contraseña incorrectos');
+        }
+
+        // ========================================
+        // PASO 3.5: VERIFICAR ESTADO DEL USUARIO
+        // ========================================
+
+        // Si el usuario tiene un error (usuario inactivo)
+        if (isset($usuario['error']) && $usuario['error'] === 'usuario_inactivo') {
+            // Obtener el estado del usuario
+            $estado = $usuario['estado'];
+
+            // Preparar mensaje según el estado
+            $mensajes = [
+                'inactivo' => 'Tu cuenta está inactiva. Por favor, contacta al administrador.',
+                'suspendido' => 'Tu cuenta ha sido suspendida. Por favor, contacta al administrador para más información.',
+                'despedido' => 'Tu cuenta ha sido desactivada. Ya no tienes acceso al sistema.',
+            ];
+
+            // Obtener el mensaje apropiado o usar uno genérico
+            $mensaje = $mensajes[$estado] ?? 'Tu cuenta no está activa. Contacta al administrador.';
+
+            // Volver al login con el mensaje de estado
+            return redirect()->back()
+                           ->withInput()
+                           ->with('error_estado', $estado)
+                           ->with('error', $mensaje);
         }
 
         // ========================================
@@ -143,13 +169,16 @@ class Auth extends BaseController
         // ========================================
         // PASO 5: CREAR SESIÓN
         // ========================================
-        
+
+        // Determinar el nombre del rol (compatibilidad con sistema nuevo y antiguo)
+        $nombreRol = $usuario['nombre_rol'] ?? $usuario['rol'] ?? 'cliente';
+
         // Preparar datos que se guardarán en la sesión
         // Estos datos estarán disponibles en todo el sistema
         $sesionData = [
             'usuario_id'    => $usuario['id_usuario'],  // ID del usuario
             'usuario_email' => $usuario['email'],        // Email del usuario
-            'usuario_rol'   => $usuario['rol'],          // Rol (admin/empleado/cliente)
+            'usuario_rol'   => $nombreRol,               // Nombre del rol
             'logueado'      => true                      // Bandera de autenticación
         ];
 
@@ -173,7 +202,6 @@ class Auth extends BaseController
             // Establecer la cookie en la respuesta
             $this->response->setCookie($cookie);
         }
-
         // ========================================
         // PASO 7: REDIRIGIR SEGÚN ROL
         // ========================================
@@ -264,13 +292,25 @@ public function intentarRegistro()
     $db->transStart();
 
     try {
-        // Solo se permite registro de clientes
+        // Obtener el ID del rol de cliente
+        $rolModel = new \App\Models\RolModel();
+        $rolCliente = $rolModel->obtenerPorNombre('cliente');
+
+        // Si no existe el rol, usar el sistema antiguo
         $datosUsuario = [
             'email'    => $this->request->getPost('email'),
             'password' => $this->request->getPost('password'),
-            'rol'      => 'cliente',
-            'activo'   => 1
+            'estado'   => 'activo'
         ];
+
+        // Sistema nuevo: usar id_rol
+        if ($rolCliente) {
+            $datosUsuario['id_rol'] = $rolCliente['id_rol'];
+        } else {
+            // Sistema antiguo: usar campo 'rol' y 'activo'
+            $datosUsuario['rol'] = 'cliente';
+            $datosUsuario['activo'] = 1;
+        }
 
         if (!$this->usuarioModel->insert($datosUsuario)) {
             $db->transRollback();
@@ -431,9 +471,10 @@ public function intentarRegistro()
 
     /**
      * Redirigir al usuario según su rol
-     * 
+     *
      * Cada rol tiene su propio dashboard
-     * 
+     * Soporta tanto nombres antiguos como nuevos de roles
+     *
      * @return \CodeIgniter\HTTP\RedirectResponse Redirección
      */
     private function redirigirSegunRol()
@@ -442,19 +483,21 @@ public function intentarRegistro()
         $rol = session()->get('usuario_rol');
 
         // Según el rol, redirigir a diferentes URLs
+        // Soporta tanto 'admin' como 'administrador'
         switch ($rol) {
             case 'admin':
+            case 'administrador':
                 // Administrador va al panel de administración
                 return redirect()->to('/admin/dashboard');
-                
+
             case 'empleado':
                 // Empleado va a su panel
                 return redirect()->to('/empleado/dashboard');
-                
+
             case 'cliente':
                 // Cliente va a su panel
                 return redirect()->to('/cliente/dashboard');
-                
+
             default:
                 // Si el rol no es reconocido, ir al inicio
                 return redirect()->to('/');

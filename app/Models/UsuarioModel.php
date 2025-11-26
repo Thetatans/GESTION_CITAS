@@ -43,9 +43,12 @@ class UsuarioModel extends Model
     protected $allowedFields = [
         'email',          // Correo electrónico
         'password',       // Contraseña (se hashea automáticamente)
-        'rol',           // Tipo de usuario
-        'activo',        // Estado del usuario
-        'ultimo_acceso'  // Fecha del último login
+        'id_rol',         // ID del rol (relación con tabla roles)
+        'estado',         // Estado del usuario (activo, inactivo, suspendido, despedido)
+        'ultimo_acceso',  // Fecha del último login
+        // Campos antiguos (mantener para compatibilidad durante migración)
+        'rol',            // Tipo de usuario (antiguo)
+        'activo'          // Estado del usuario (antiguo)
     ];
 
     // ============================================
@@ -74,12 +77,19 @@ class UsuarioModel extends Model
         // Email: obligatorio, formato válido, único en la tabla
         // {id_usuario} permite actualizar el mismo usuario sin error de duplicado
         'email' => 'required|valid_email|is_unique[usuarios.email,id_usuario,{id_usuario}]',
-        
+
         // Password: obligatorio, mínimo 8 caracteres
         'password' => 'required|min_length[8]',
-        
-        // Rol: obligatorio, debe ser uno de los valores permitidos
-        'rol' => 'required|in_list[admin,empleado,cliente]',
+
+        // ID Rol: obligatorio, debe existir en la tabla roles
+        'id_rol' => 'permit_empty|integer|is_not_unique[roles.id_rol]',
+
+        // Estado: obligatorio, debe ser uno de los valores permitidos
+        'estado' => 'permit_empty|in_list[activo,inactivo,suspendido,despedido]',
+
+        // Campos antiguos (mantener para compatibilidad durante migración)
+        'rol' => 'permit_empty|in_list[admin,empleado,cliente]',
+        'activo' => 'permit_empty|integer'
     ];
 
     // Mensajes personalizados de error para cada regla
@@ -93,8 +103,14 @@ class UsuarioModel extends Model
             'required'   => 'La contraseña es obligatoria',
             'min_length' => 'La contraseña debe tener al menos 8 caracteres',
         ],
+        'id_rol' => [
+            'integer' => 'El ID del rol debe ser un número',
+            'is_not_unique' => 'El rol seleccionado no existe',
+        ],
+        'estado' => [
+            'in_list' => 'Estado inválido. Debe ser: activo, inactivo, suspendido o despedido',
+        ],
         'rol' => [
-            'required' => 'El rol es obligatorio',
             'in_list'  => 'Rol inválido',
         ],
     ];
@@ -153,40 +169,58 @@ class UsuarioModel extends Model
 
     /**
      * Verificar credenciales de login
-     * 
-     * Este método verifica email y contraseña
-     * y retorna el usuario si las credenciales son correctas
-     * 
+     *
+     * Este método verifica email, contraseña y estado del usuario
+     * Retorna el usuario si las credenciales son correctas y está activo
+     *
      * @param string $email Email ingresado
      * @param string $password Contraseña en texto plano ingresada
-     * @return array|false Datos del usuario si es válido, false si no
+     * @return array|false Datos del usuario con información de estado
      */
     public function verificarCredenciales($email, $password)
     {
-        // Paso 1: Buscar usuario por email
-        $usuario = $this->buscarPorEmail($email);
+        // Paso 1: Buscar usuario por email con información del rol
+        $usuario = $this->select('usuarios.*, roles.nombre_rol')
+                        ->join('roles', 'roles.id_rol = usuarios.id_rol', 'left')
+                        ->where('usuarios.email', $email)
+                        ->first();
 
         // Si no existe el usuario, retornar false
         if (!$usuario) {
             return false;
         }
 
-        // Paso 2: Verificar que el usuario esté activo
-        // No permitir login a usuarios inactivos
-        if (!$usuario['activo']) {
+        // Paso 2: Verificar la contraseña ANTES de verificar el estado
+        // Esto evita revelar si el usuario existe o no
+        if (!password_verify($password, $usuario['password'])) {
             return false;
         }
 
-        // Paso 3: Verificar la contraseña
-        // password_verify() compara la contraseña ingresada con el hash
-        // Esta función es segura contra timing attacks
-        if (password_verify($password, $usuario['password'])) {
-            // Si la contraseña es correcta, retornar datos del usuario
-            return $usuario;
+        // Paso 3: Verificar el estado del usuario
+        // IMPORTANTE: Verificar AMBOS campos (nuevo y antiguo) para máxima seguridad
+
+        // A) Verificar campo 'estado' (sistema nuevo)
+        if (isset($usuario['estado']) && $usuario['estado'] !== 'activo') {
+            // Si el estado NO es 'activo', bloquear acceso
+            return [
+                'error' => 'usuario_inactivo',
+                'estado' => $usuario['estado'],
+                'email' => $usuario['email']
+            ];
         }
 
-        // Si la contraseña no coincide, retornar false
-        return false;
+        // B) Verificar campo 'activo' (sistema antiguo)
+        // Esto se verifica ADEMÁS del campo estado, no en lugar de
+        if (isset($usuario['activo']) && $usuario['activo'] == 0) {
+            return [
+                'error' => 'usuario_inactivo',
+                'estado' => 'inactivo',
+                'email' => $usuario['email']
+            ];
+        }
+
+        // Paso 4: Si todo está correcto, retornar datos del usuario
+        return $usuario;
     }
 
     /**
@@ -263,7 +297,7 @@ class UsuarioModel extends Model
 
     /**
      * Cambiar la contraseña de un usuario
-     * 
+     *
      * @param int $id_usuario ID del usuario
      * @param string $nueva_password Nueva contraseña en texto plano
      * @return bool True si se cambió, false si falló
@@ -275,5 +309,106 @@ class UsuarioModel extends Model
         return $this->update($id_usuario, [
             'password' => password_hash($nueva_password, PASSWORD_DEFAULT)
         ]);
+    }
+
+    // ============================================
+    // MÉTODOS NUEVOS PARA SISTEMA DE ROLES
+    // ============================================
+
+    /**
+     * Obtener usuario con información completa del rol
+     *
+     * @param int $id_usuario ID del usuario
+     * @return array|null Datos del usuario con información del rol
+     */
+    public function obtenerConRol($id_usuario)
+    {
+        return $this->select('usuarios.*, roles.nombre_rol, roles.descripcion as rol_descripcion')
+                    ->join('roles', 'roles.id_rol = usuarios.id_rol', 'left')
+                    ->where('usuarios.id_usuario', $id_usuario)
+                    ->first();
+    }
+
+    /**
+     * Obtener todos los usuarios con información del rol
+     *
+     * @return array Lista de usuarios con sus roles
+     */
+    public function obtenerTodosConRol()
+    {
+        return $this->select('usuarios.*, roles.nombre_rol')
+                    ->join('roles', 'roles.id_rol = usuarios.id_rol', 'left')
+                    ->orderBy('usuarios.id_usuario', 'DESC')
+                    ->findAll();
+    }
+
+    /**
+     * Obtener usuarios por ID de rol
+     *
+     * @param int $id_rol ID del rol
+     * @param bool $soloActivos Si true, solo retorna usuarios activos
+     * @return array Lista de usuarios
+     */
+    public function obtenerPorIdRol($id_rol, $soloActivos = true)
+    {
+        $builder = $this->where('id_rol', $id_rol);
+
+        if ($soloActivos) {
+            $builder->where('estado', 'activo');
+        }
+
+        return $builder->findAll();
+    }
+
+    /**
+     * Cambiar el estado de un usuario
+     *
+     * @param int $id_usuario ID del usuario
+     * @param string $nuevoEstado Nuevo estado (activo, inactivo, suspendido, despedido)
+     * @return bool True si se cambió, false si falló
+     */
+    public function cambiarEstado($id_usuario, $nuevoEstado)
+    {
+        $estadosValidos = ['activo', 'inactivo', 'suspendido', 'despedido'];
+
+        if (!in_array($nuevoEstado, $estadosValidos)) {
+            return false;
+        }
+
+        return $this->update($id_usuario, ['estado' => $nuevoEstado]);
+    }
+
+    /**
+     * Obtener nombre del rol de un usuario (compatibilidad)
+     * Funciona tanto con el sistema nuevo como con el antiguo
+     *
+     * @param int $id_usuario ID del usuario
+     * @return string|null Nombre del rol
+     */
+    public function obtenerNombreRol($id_usuario)
+    {
+        $usuario = $this->obtenerConRol($id_usuario);
+
+        if (!$usuario) {
+            return null;
+        }
+
+        // Sistema nuevo: usa nombre_rol de la tabla roles
+        if (isset($usuario['nombre_rol'])) {
+            return $usuario['nombre_rol'];
+        }
+
+        // Sistema antiguo: usa el campo 'rol' directamente
+        if (isset($usuario['rol'])) {
+            // Convertir nombres antiguos a nuevos
+            $mapeo = [
+                'admin' => 'administrador',
+                'empleado' => 'empleado',
+                'cliente' => 'cliente'
+            ];
+            return $mapeo[$usuario['rol']] ?? $usuario['rol'];
+        }
+
+        return null;
     }
 }

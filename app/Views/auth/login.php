@@ -19,8 +19,28 @@
         <?php endif; ?>
 
         <?php if (session()->has('error')): ?>
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="bi bi-exclamation-triangle"></i> <?= session('error') ?>
+            <?php
+            // Determinar el icono y clase según el tipo de error
+            $estadoUsuario = session('error_estado');
+            $iconoClase = 'bi-exclamation-triangle';
+            $alertaClase = 'alert-danger';
+
+            // Personalizar según el estado del usuario
+            if ($estadoUsuario === 'suspendido') {
+                $iconoClase = 'bi-pause-circle';
+                $alertaClase = 'alert-warning';
+            } elseif ($estadoUsuario === 'inactivo') {
+                $iconoClase = 'bi-x-circle';
+                $alertaClase = 'alert-info';
+            } elseif ($estadoUsuario === 'despedido') {
+                $iconoClase = 'bi-ban';
+                $alertaClase = 'alert-danger';
+            }
+            ?>
+            <div class="alert <?= $alertaClase ?> alert-dismissible fade show" role="alert">
+                <i class="bi <?= $iconoClase ?>"></i>
+                <strong><?= $estadoUsuario ? 'Cuenta ' . ucfirst($estadoUsuario) : 'Error' ?>:</strong>
+                <?= session('error') ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         <?php endif; ?>
@@ -65,15 +85,7 @@
                        required>
             </div>
 
-            <div class="mb-3 form-check">
-                <input type="checkbox" 
-                       class="form-check-input" 
-                       id="recordar" 
-                       name="recordar">
-                <label class="form-check-label" for="recordar">
-                    Recordarme
-                </label>
-            </div>
+            
 
             <div class="d-grid gap-2">
                 <button type="submit" class="btn btn-primary btn-lg">

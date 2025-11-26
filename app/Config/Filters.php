@@ -39,6 +39,8 @@ class Filters extends BaseFilters
     'admin'         => \App\Filters\AdminFilter::class,
     'empleado'      => \App\Filters\EmpleadoFilter::class,
     'cliente'       => \App\Filters\ClienteFilter::class,
+    // FILTRO DE VERIFICACIÓN DE ESTADO ⬇️
+    'verificar_estado' => \App\Filters\VerificarEstadoUsuario::class,
 ];
 
     /**
@@ -80,6 +82,7 @@ class Filters extends BaseFilters
             // 'honeypot',
             // 'csrf',
             // 'invalidchars',
+            'verificar_estado', // Verificar estado del usuario en cada petición
         ],
         'after' => [
             // 'honeypot',

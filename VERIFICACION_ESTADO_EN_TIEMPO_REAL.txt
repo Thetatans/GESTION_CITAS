@@ -1,0 +1,331 @@
+================================================================================
+VERIFICACIÓN DE ESTADO DE USUARIO EN TIEMPO REAL
+================================================================================
+
+FUNCIONALIDAD IMPLEMENTADA: Cierre automático de sesión cuando el estado cambia
+FECHA: 2025-11-26
+
+================================================================================
+¿QUÉ HACE ESTA FUNCIONALIDAD?
+================================================================================
+
+Cuando un administrador cambia el estado de un usuario a:
+- inactivo
+- suspendido
+- despedido
+- o cambia el campo 'activo' a 0
+
+El usuario es DESCONECTADO AUTOMÁTICAMENTE en su siguiente petición,
+sin importar dónde esté navegando en el sistema.
+
+================================================================================
+¿CÓMO FUNCIONA?
+================================================================================
+
+1. Se creó un nuevo filtro: VerificarEstadoUsuario
+   Ubicación: app/Filters/VerificarEstadoUsuario.php
+
+2. Este filtro se ejecuta ANTES de cada petición HTTP
+
+3. El filtro verifica:
+   ✓ ¿El usuario está logueado?
+   ✓ ¿El usuario sigue existiendo en la BD?
+   ✓ ¿El campo 'estado' es 'activo'?
+   ✓ ¿El campo 'activo' es 1?
+
+4. Si cualquier verificación falla:
+   → Cierra la sesión completamente
+   → Redirige al login
+   → Muestra mensaje apropiado según el estado
+
+================================================================================
+FLUJO DE EJECUCIÓN
+================================================================================
+
+ESCENARIO: Admin desactiva un empleado que está navegando
+
+┌─────────────────────────────────────────────────────────────────┐
+│ USUARIO: Empleado logueado navegando en /empleado/dashboard     │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ ADMIN: Cambia estado del empleado a "suspendido" en phpMyAdmin │
+│ UPDATE usuarios SET estado='suspendido' WHERE id_usuario=2;     │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ EMPLEADO: Hace clic en cualquier enlace o recarga la página     │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ FILTRO VerificarEstadoUsuario: SE EJECUTA AUTOMÁTICAMENTE       │
+│                                                                  │
+│ 1. ¿Usuario logueado? ✓ Sí                                     │
+│ 2. Buscar en BD: SELECT * FROM usuarios WHERE id_usuario=2      │
+│ 3. Estado encontrado: "suspendido"                              │
+│ 4. ¿Estado = 'activo'? ✗ NO                                    │
+│                                                                  │
+│ → ACCIÓN: Cerrar sesión y redirigir                            │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ RESULTADO:                                                       │
+│ - Sesión destruida completamente                                │
+│ - Cookie "recordarme" eliminada                                 │
+│ - Redirigido a /login                                           │
+│ - Alerta amarilla: "Tu cuenta ha sido suspendida..."           │
+└─────────────────────────────────────────────────────────────────┘
+
+================================================================================
+ARCHIVO CREADO
+================================================================================
+
+app/Filters/VerificarEstadoUsuario.php
+--------------------------------------
+
+Características:
+- Verifica estado en cada petición
+- Funciona con campos 'estado' (nuevo) y 'activo' (antiguo)
+- Cierra sesión si usuario está inactivo
+- Registra eventos en logs
+- Mensajes personalizados según estado
+
+Métodos principales:
+- before(): Ejecutado antes de cada petición
+- cerrarSesion(): Limpia completamente la sesión
+
+================================================================================
+CONFIGURACIÓN
+================================================================================
+
+app/Config/Filters.php
+----------------------
+
+1. Registro del filtro en aliases:
+   'verificar_estado' => \App\Filters\VerificarEstadoUsuario::class
+
+2. Activado globalmente en TODAS las peticiones:
+   public array $globals = [
+       'before' => [
+           'verificar_estado', // ← Aquí
+       ],
+   ];
+
+Esto significa que el filtro se ejecuta:
+✓ En /admin/dashboard
+✓ En /empleado/dashboard
+✓ En /cliente/dashboard
+✓ En /cliente/agendar
+✓ En /admin/usuarios
+✓ En CUALQUIER ruta del sistema
+
+EXCEPCIÓN: No se ejecuta en rutas públicas si el usuario no está logueado
+
+================================================================================
+MENSAJES MOSTRADOS SEGÚN ESTADO
+================================================================================
+
+Estado: inactivo
+Mensaje: "Tu cuenta ha sido desactivada. Ya no puedes acceder al sistema."
+Alerta: Azul (info) con icono bi-x-circle
+
+Estado: suspendido
+Mensaje: "Tu cuenta ha sido suspendida. Por favor, contacta al administrador."
+Alerta: Amarilla (warning) con icono bi-pause-circle
+
+Estado: despedido
+Mensaje: "Tu cuenta ha sido desactivada permanentemente."
+Alerta: Roja (danger) con icono bi-ban
+
+Usuario eliminado:
+Mensaje: "Tu cuenta ya no existe en el sistema."
+Alerta: Roja (danger)
+
+================================================================================
+PRUEBA PASO A PASO
+================================================================================
+
+PRUEBA 1: Desactivar admin mientras navega
+-------------------------------------------
+
+1. Abrir 2 pestañas del navegador:
+   - Pestaña A: Login como admin (admin@barberia.com)
+   - Pestaña B: phpMyAdmin
+
+2. En pestaña A:
+   - Navegar por el sistema normalmente
+   - Ver que todo funciona
+
+3. En pestaña B (phpMyAdmin):
+   - Ejecutar: UPDATE usuarios SET estado='suspendido' WHERE email='admin@barberia.com';
+
+4. En pestaña A:
+   - Hacer clic en CUALQUIER enlace o recargar (F5)
+   - RESULTADO ESPERADO:
+     ✓ Redirigido inmediatamente a /login
+     ✓ Alerta amarilla: "Tu cuenta ha sido suspendida..."
+     ✓ No puede volver atrás (sesión cerrada)
+
+5. Reactivar en phpMyAdmin:
+   - UPDATE usuarios SET estado='activo' WHERE email='admin@barberia.com';
+
+
+PRUEBA 2: Cambiar campo 'activo' a 0
+-------------------------------------
+
+1. Login como empleado (empleado@barberia.com)
+
+2. En phpMyAdmin:
+   - UPDATE usuarios SET activo=0 WHERE email='empleado@barberia.com';
+
+3. En el navegador (como empleado):
+   - Intentar navegar a otra página
+   - RESULTADO ESPERADO:
+     ✓ Desconectado automáticamente
+     ✓ Mensaje: "Tu cuenta ha sido desactivada..."
+
+4. Reactivar:
+   - UPDATE usuarios SET activo=1 WHERE email='empleado@barberia.com';
+
+
+PRUEBA 3: Eliminar usuario de la base de datos
+-----------------------------------------------
+
+1. Login como cliente (cliente@barberia.com)
+
+2. En phpMyAdmin:
+   - DELETE FROM clientes WHERE id_usuario=3;
+   - DELETE FROM usuarios WHERE email='cliente@barberia.com';
+
+3. En el navegador:
+   - Intentar hacer cualquier acción
+   - RESULTADO ESPERADO:
+     ✓ Desconectado automáticamente
+     ✓ Mensaje: "Tu cuenta ya no existe en el sistema."
+
+NOTA: Esta prueba es destructiva, solo para demostración
+
+================================================================================
+LOGS GENERADOS
+================================================================================
+
+Cada vez que un usuario es desconectado automáticamente, se genera un log:
+
+Ubicación: writable/logs/log-YYYY-MM-DD.log
+
+Ejemplo de entrada:
+INFO - 2025-11-26 15:12:30 --> Usuario ID 2 (empleado@barberia.com) fue desconectado automáticamente. Estado: suspendido
+
+Esto es útil para:
+- Auditoría de seguridad
+- Debugging
+- Estadísticas de usuarios desactivados
+
+================================================================================
+RENDIMIENTO
+================================================================================
+
+¿Esto hace más lento el sistema?
+---------------------------------
+
+IMPACTO MÍNIMO:
+- 1 consulta SQL adicional por petición
+- Solo se ejecuta si el usuario está logueado
+- Query optimizado (usa índice en id_usuario)
+- Tiempo estimado: < 1ms por petición
+
+QUERY EJECUTADO:
+SELECT id_usuario, email, estado, activo
+FROM usuarios
+WHERE id_usuario = ?
+
+✓ Usa PRIMARY KEY (muy rápido)
+✓ Solo retorna 4 campos
+✓ Resultado cacheado por MySQL
+
+================================================================================
+SEGURIDAD
+================================================================================
+
+Esta funcionalidad MEJORA la seguridad del sistema:
+
+✓ Previene que usuarios desactivados sigan usando el sistema
+✓ Efecto inmediato (no hay que esperar a que cierre sesión)
+✓ No depende de timeouts de sesión
+✓ Funciona incluso si el usuario tiene "recordarme" activado
+✓ Protege contra usuarios maliciosos que manipulan cookies
+
+CASO DE USO IMPORTANTE:
+- Empleado es despedido
+- Admin lo marca como "despedido" en el sistema
+- El empleado está usando el sistema en ese momento
+- Con esta funcionalidad: Es desconectado INMEDIATAMENTE
+- Sin esta funcionalidad: Podría seguir usando el sistema hasta que cierre sesión
+
+================================================================================
+COMPATIBILIDAD
+================================================================================
+
+✓ Compatible con sistema nuevo (campo 'estado')
+✓ Compatible con sistema antiguo (campo 'activo')
+✓ No interfiere con otros filtros
+✓ No rompe funcionalidad existente
+✓ Se puede desactivar fácilmente si es necesario
+
+Para desactivar (si es necesario):
+----------------------------------
+En app/Config/Filters.php, comentar la línea:
+
+public array $globals = [
+    'before' => [
+        // 'verificar_estado', // ← Comentar esta línea
+    ],
+];
+
+================================================================================
+MEJORAS FUTURAS POSIBLES
+================================================================================
+
+1. Cache de consulta de estado (5-10 segundos)
+   - Reducir queries a BD
+   - Usar Redis o cache de CodeIgniter
+
+2. Notificación antes de desconectar
+   - Mostrar modal: "Tu cuenta será desactivada en 30 segundos"
+   - Dar tiempo al usuario para guardar trabajo
+
+3. Razón de desactivación
+   - Campo nuevo: 'razon_desactivacion'
+   - Mostrar en el mensaje de logout
+
+4. Historial de desconexiones forzadas
+   - Tabla: historial_desconexiones_forzadas
+   - Registrar: cuándo, por qué, quién lo desactivó
+
+5. Reactivación temporal
+   - Admin puede dar acceso temporal (1 hora)
+   - Para que usuario termine tareas urgentes
+
+================================================================================
+RESUMEN
+================================================================================
+
+✅ Filtro global que verifica estado en cada petición
+✅ Cierra sesión automáticamente si usuario está inactivo
+✅ Funciona con ambos sistemas (nuevo y antiguo)
+✅ Mensajes claros según el tipo de desactivación
+✅ Logs para auditoría
+✅ Impacto mínimo en rendimiento
+✅ Mejora significativa en seguridad
+
+ARCHIVOS MODIFICADOS:
+- app/Filters/VerificarEstadoUsuario.php (NUEVO)
+- app/Config/Filters.php (MODIFICADO)
+
+================================================================================
+FIN DEL DOCUMENTO
+================================================================================

@@ -39,18 +39,40 @@ class AdminFilter implements FilterInterface
         // ========================================
         // PASO 2: VERIFICAR QUE SEA ADMINISTRADOR
         // ========================================
-        
+
         // Obtener el rol del usuario de la sesión
         $rol = session()->get('usuario_rol');
-        
-        // Verificar si el rol es 'admin'
-        if ($rol !== 'admin') {
-            // Si NO es admin, bloquear acceso
-            // redirect()->back() vuelve a la página anterior
-            return redirect()->back()
-                           ->with('error', 'No tienes permisos para acceder a esta sección');
+
+        // Verificar si el rol es 'admin' o 'administrador'
+        // Soporta tanto el nombre antiguo como el nuevo
+        if ($rol !== 'admin' && $rol !== 'administrador') {
+            // Si NO es admin, CERRAR SESIÓN y redirigir al login
+            // Esto previene intentos de acceso no autorizado manipulando URLs
+
+            // Log del intento de acceso no autorizado
+            log_message('warning', "Intento de acceso no autorizado a área admin por usuario con rol: {$rol}");
+
+            // Cargar helper de cookies
+            helper('cookie');
+
+            // Eliminar cookie de "recordarme" ANTES de destruir sesión
+            delete_cookie('recordar_usuario');
+
+            // Destruir TODOS los datos de sesión
+            session()->remove('usuario_id');
+            session()->remove('usuario_email');
+            session()->remove('usuario_rol');
+            session()->remove('logueado');
+
+            // Destruir completamente la sesión
+            session()->destroy();
+
+            // Redirigir al login con mensaje de error
+            return redirect()->to('/login')
+                           ->with('error', 'No estás autorizado para acceder a esa sección. Tu sesión ha sido cerrada por seguridad.')
+                           ->with('tipo_error', 'acceso_no_autorizado');
         }
-        
+
         // Si es admin, permitir acceso
         // El flujo continúa al controlador
     }
