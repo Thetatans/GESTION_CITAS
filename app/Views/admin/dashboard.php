@@ -172,17 +172,20 @@
                                 </div>
                                 <div class="card-body">
                                     <div class="list-group">
-                                        <a href="<?= base_url('admin/usuarios') ?>" class="list-group-item list-group-item-action">
-                                            <i ></i> Gestionar Usuarios
+                                        <a href="<?= base_url('admin/clientes') ?>" class="list-group-item list-group-item-action">
+                                            <i class="bi bi-people"></i> Gestionar Clientes
+                                        </a>
+                                        <a href="<?= base_url('admin/empleados') ?>" class="list-group-item list-group-item-action">
+                                            <i class="bi bi-people-fill"></i> Gestionar Empleados
                                         </a>
                                         <a href="<?= base_url('admin/servicios') ?>" class="list-group-item list-group-item-action">
-                                            <i ></i> Gestionar Servicios
+                                            <i class="bi bi-gear"></i> Gestionar Servicios
                                         </a>
                                         <a href="<?= base_url('admin/citas') ?>" class="list-group-item list-group-item-action">
-                                            <i ></i> Ver Todas las Citas
+                                            <i class="bi bi-calendar-check"></i> Ver Todas las Citas
                                         </a>
                                         <a href="<?= base_url('admin/reportes') ?>" class="list-group-item list-group-item-action">
-                                            <i ></i> Reportes y Estadísticas
+                                            <i class="bi bi-graph-up"></i> Reportes y Estadísticas
                                         </a>
                                     </div>
                                 </div>

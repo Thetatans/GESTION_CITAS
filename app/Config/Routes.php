@@ -40,24 +40,44 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
 
 $routes->group('admin', ['filter' => 'admin'], function($routes) {
     $routes->get('dashboard', 'Admin\Dashboard::index');
-    
+
+    // Gestión de Clientes
+    $routes->get('clientes', 'Admin\Clientes::index');
+    $routes->get('clientes/crear', 'Admin\Clientes::crear');
+    $routes->post('clientes/guardar', 'Admin\Clientes::guardar');
+    $routes->get('clientes/editar/(:num)', 'Admin\Clientes::editar/$1');
+    $routes->post('clientes/actualizar/(:num)', 'Admin\Clientes::actualizar/$1');
+    $routes->get('clientes/eliminar/(:num)', 'Admin\Clientes::eliminar/$1');
+
+    // Gestión de Empleados
+    $routes->get('empleados', 'Admin\Empleados::index');
+    $routes->get('empleados/crear', 'Admin\Empleados::crear');
+    $routes->post('empleados/guardar', 'Admin\Empleados::guardar');
+    $routes->get('empleados/editar/(:num)', 'Admin\Empleados::editar/$1');
+    $routes->post('empleados/actualizar/(:num)', 'Admin\Empleados::actualizar/$1');
+    $routes->get('empleados/eliminar/(:num)', 'Admin\Empleados::eliminar/$1');
+
+    // Gestión de Usuarios (antiguo)
     $routes->get('usuarios', 'Admin\Usuarios::index');
     $routes->get('usuarios/crear', 'Admin\Usuarios::crear');
     $routes->post('usuarios/guardar', 'Admin\Usuarios::guardar');
     $routes->get('usuarios/editar/(:num)', 'Admin\Usuarios::editar/$1');
     $routes->post('usuarios/actualizar/(:num)', 'Admin\Usuarios::actualizar/$1');
     $routes->get('usuarios/eliminar/(:num)', 'Admin\Usuarios::eliminar/$1');
-    
+
+    // Gestión de Servicios
     $routes->get('servicios', 'Admin\Servicios::index');
     $routes->get('servicios/crear', 'Admin\Servicios::crear');
     $routes->post('servicios/guardar', 'Admin\Servicios::guardar');
     $routes->get('servicios/editar/(:num)', 'Admin\Servicios::editar/$1');
     $routes->post('servicios/actualizar/(:num)', 'Admin\Servicios::actualizar/$1');
     $routes->get('servicios/eliminar/(:num)', 'Admin\Servicios::eliminar/$1');
-    
+
+    // Gestión de Citas
     $routes->get('citas', 'Admin\Citas::index');
     $routes->get('citas/ver/(:num)', 'Admin\Citas::ver/$1');
-    
+
+    // Reportes
     $routes->get('reportes', 'Admin\Reportes::index');
 });
 

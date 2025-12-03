@@ -78,8 +78,8 @@ class UsuarioModel extends Model
         // {id_usuario} permite actualizar el mismo usuario sin error de duplicado
         'email' => 'required|valid_email|is_unique[usuarios.email,id_usuario,{id_usuario}]',
 
-        // Password: obligatorio, mínimo 8 caracteres
-        'password' => 'required|min_length[8]',
+        // Password: opcional, pero si se proporciona debe tener mínimo 8 caracteres
+        'password' => 'permit_empty|min_length[8]',
 
         // ID Rol: obligatorio, debe existir en la tabla roles
         'id_rol' => 'permit_empty|integer|is_not_unique[roles.id_rol]',
@@ -100,7 +100,6 @@ class UsuarioModel extends Model
             'is_unique'   => 'Este email ya está registrado',
         ],
         'password' => [
-            'required'   => 'La contraseña es obligatoria',
             'min_length' => 'La contraseña debe tener al menos 8 caracteres',
         ],
         'id_rol' => [
@@ -127,10 +126,10 @@ class UsuarioModel extends Model
 
     /**
      * Hashear contraseña antes de guardar en base de datos
-     * 
+     *
      * IMPORTANTE: Nunca guardar contraseñas en texto plano
      * Se usa password_hash() que genera un hash seguro
-     * 
+     *
      * @param array $data Datos que se van a insertar/actualizar
      * @return array Datos modificados con password hasheado
      */
@@ -138,14 +137,19 @@ class UsuarioModel extends Model
     {
         // Verificar si se está intentando modificar la contraseña
         if (isset($data['data']['password'])) {
-            // Hashear la contraseña usando el algoritmo por defecto (bcrypt)
-            // PASSWORD_DEFAULT usa bcrypt que es muy seguro
-            $data['data']['password'] = password_hash(
-                $data['data']['password'], 
-                PASSWORD_DEFAULT
-            );
+            // Si el password está vacío, eliminarlo del array para no actualizarlo
+            if (empty($data['data']['password'])) {
+                unset($data['data']['password']);
+            } else {
+                // Hashear la contraseña usando el algoritmo por defecto (bcrypt)
+                // PASSWORD_DEFAULT usa bcrypt que es muy seguro
+                $data['data']['password'] = password_hash(
+                    $data['data']['password'],
+                    PASSWORD_DEFAULT
+                );
+            }
         }
-        
+
         // Retornar los datos modificados
         return $data;
     }
