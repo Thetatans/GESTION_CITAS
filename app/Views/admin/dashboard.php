@@ -145,6 +145,9 @@
                 <span class="navbar-text text-white me-3">
                     <i class="bi bi-person-circle"></i> <?= esc($usuario_nombre) ?>
                 </span>
+                <a href="<?= base_url('manual') ?>" class="btn btn-outline-light btn-sm me-2" title="Descargar Manual de Usuario (PDF)">
+                    <i class="bi bi-file-earmark-pdf"></i> Manual PDF
+                </a>
                 <a href="<?= base_url('logout') ?>" class="btn btn-outline-light btn-sm">
                     <i class="bi bi-box-arrow-right"></i> Salir
                 </a>
@@ -156,11 +159,11 @@
         <div class="container mt-5">
             <div class="row">
                 <div class="col-md-12">
-                    <h1><i ></i> <?= esc($titulo) ?></h1>
+                    <h1><?= esc($titulo) ?></h1>
                     <hr>
 
                     <div class="alert alert-success">
-                        <h4><i></i> ¡Bienvenido Administrador!</h4>
+                        <h4>¡Bienvenido Administrador!</h4>
                         <p class="mb-0">Has iniciado sesión correctamente con rol de <strong>ADMINISTRADOR</strong>.</p>
                     </div>
 

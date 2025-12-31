@@ -7,6 +7,7 @@ namespace App\Controllers\Cliente;
 // Importar las clases necesarias
 use App\Controllers\BaseController;
 use App\Models\ClienteModel;
+use App\Models\CitasModel;
 
 /**
  * Controlador Dashboard Cliente
@@ -45,30 +46,45 @@ class Dashboard extends BaseController
     public function index()
     {
         // PASO 1: OBTENER DATOS DEL CLIENTE
-        // Crear instancia del modelo de cliente
         $clienteModel = new ClienteModel();
+        $citasModel = new CitasModel();
 
         // Buscar el cliente por su id_usuario almacenado en sesión
-        // Usamos where() porque buscamos por id_usuario, no por id_cliente
-        // first() retorna solo el primer resultado (o null si no existe)
         $cliente = $clienteModel->where('id_usuario', session()->get('usuario_id'))->first();
 
-        // PASO 2: PREPARAR DATOS PARA LA VISTA
-        $data = [
-            // Título que aparecerá en la página
-            'titulo' => 'Mi Dashboard',
+        // Si no existe cliente, crear uno automáticamente
+        if (!$cliente) {
+            $usuarioId = session()->get('usuario_id');
+            $usuarioEmail = session()->get('usuario_email');
 
-            // Nombre del usuario para mostrar en el navbar
-            // Si existe el cliente, muestra su nombre completo (nombre + apellido)
-            // Si no existe, usa el email de la sesión como respaldo
-            // Esto puede pasar si el usuario existe pero no tiene perfil de cliente creado
-            'usuario_nombre' => $cliente ? $cliente['nombre'] . ' ' . $cliente['apellido'] : session()->get('usuario_email')
+            $datosCliente = [
+                'id_usuario' => $usuarioId,
+                'nombre' => $usuarioEmail,
+                'apellido' => '',
+                'telefono' => '',
+                'fecha_nacimiento' => null,
+                'genero' => null,
+                'direccion' => ''
+            ];
+
+            $idClienteNuevo = $clienteModel->insert($datosCliente);
+            $cliente = $clienteModel->find($idClienteNuevo);
+        }
+
+        // PASO 2: OBTENER PRÓXIMAS CITAS
+        $proximasCitas = [];
+        if ($cliente) {
+            $proximasCitas = $citasModel->obtenerProximasCitasCliente($cliente['id_cliente']);
+        }
+
+        // PASO 3: PREPARAR DATOS PARA LA VISTA
+        $data = [
+            'titulo' => 'Mi Dashboard',
+            'usuario_nombre' => $cliente ? $cliente['nombre'] . ' ' . $cliente['apellido'] : session()->get('usuario_email'),
+            'proximasCitas' => $proximasCitas
         ];
 
-        // PASO 3: CARGAR Y RETORNAR LA VISTA
-        // view() es una función helper de CodeIgniter
-        // Carga la vista ubicada en app/Views/cliente/dashboard.php
-        // Le pasa el array $data con la información necesaria
+        // PASO 4: CARGAR Y RETORNAR LA VISTA
         return view('cliente/dashboard', $data);
     }
 }

@@ -1,0 +1,591 @@
+================================================================================
+  GUÍA RÁPIDA DE TCPDF - REFERENCIA COMPLETA
+  Sistema de Gestión de Citas - Barbería y Spa
+================================================================================
+
+AUTOR: Para Ilich Esteban Reyes Botia
+FECHA: <?= date('Y-m-d') ?>
+
+
+================================================================================
+1. ARCHIVOS CREADOS CON EJEMPLOS
+================================================================================
+
+He creado 2 archivos de ejemplo en tu carpeta public/:
+
+EJEMPLO 1: PDF Simple
+---------------------
+Ubicación: public/ejemplo_pdf_simple.php
+URL: http://localhost/gestion_citas/public/ejemplo_pdf_simple.php
+
+Contiene:
+  ✓ Título y subtítulos
+  ✓ Texto formateado
+  ✓ Listas con viñetas
+  ✓ Tabla HTML simple
+  ✓ Cuadros de información
+  ✓ Múltiples páginas
+  ✓ Paleta de colores
+  ✓ Pie de página
+
+
+EJEMPLO 2: Tablas Profesionales
+--------------------------------
+Ubicación: public/ejemplo_pdf_tabla.php
+URL: http://localhost/gestion_citas/public/ejemplo_pdf_tabla.php
+
+Contiene:
+  ✓ Tabla simple (con Cell)
+  ✓ Tabla con HTML (writeHTML)
+  ✓ Tabla con datos dinámicos (foreach)
+  ✓ Filas zebra (alternadas)
+  ✓ Estados con colores
+  ✓ KPIs en recuadros
+  ✓ Totales y subtotales
+
+
+TU CÓDIGO REAL:
+--------------
+Ubicación: app/Controllers/Admin/Reportes.php
+Línea 189: Método exportarPDF()
+
+URLs de acceso:
+  - Dashboard: http://localhost/gestion_citas/public/admin/reportes
+  - PDF General: ...exportarPDF?tipo=general&fecha_inicio=2025-01-01&fecha_fin=2025-01-31
+  - PDF Empleado: ...exportarPDF?tipo=empleado&...
+  - PDF Servicio: ...exportarPDF?tipo=servicio&...
+  - PDF Realizadas: ...exportarPDF?tipo=realizadas&...
+
+
+================================================================================
+2. ESTRUCTURA BÁSICA DE UN PDF
+================================================================================
+
+<?php
+// 1. Cargar librería
+require_once 'vendor/autoload.php';
+
+// 2. Crear instancia
+$pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
+
+// 3. Configurar
+$pdf->SetMargins(15, 15, 15);
+
+// 4. Agregar página
+$pdf->AddPage();
+
+// 5. Escribir contenido
+$pdf->SetFont('helvetica', 'B', 16);
+$pdf->Cell(0, 10, 'TÍTULO', 0, 1, 'C');
+
+// 6. Generar
+$pdf->Output('archivo.pdf', 'D');
+?>
+
+
+================================================================================
+3. CONSTRUCTOR DE TCPDF
+================================================================================
+
+new TCPDF(orientación, unidad, formato, unicode, codificación, descarte)
+
+PARÁMETROS:
+
+1. ORIENTACIÓN:
+   'P' = Portrait (vertical) ← más común
+   'L' = Landscape (horizontal)
+
+2. UNIDAD:
+   'mm' = Milímetros ← más común
+   'cm' = Centímetros
+   'pt' = Puntos
+   'in' = Pulgadas
+
+3. FORMATO:
+   'A4'     = 210 x 297 mm ← más común
+   'Letter' = 216 x 279 mm (USA)
+   'Legal'  = 216 x 356 mm
+   [ancho, alto] = Personalizado
+
+4. UNICODE:
+   true  = Soporta caracteres especiales (ñ, á, é) ← SIEMPRE true
+   false = Solo ASCII
+
+5. CODIFICACIÓN:
+   'UTF-8' ← SIEMPRE usar esto
+
+6. DESCARTE:
+   false = No usar caché ← Normal
+   true  = Usar caché
+
+
+EJEMPLOS:
+
+// PDF vertical A4 con UTF-8 (lo más común)
+$pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
+
+// PDF horizontal Letter
+$pdf = new TCPDF('L', 'mm', 'Letter', true, 'UTF-8', false);
+
+// PDF tamaño personalizado
+$pdf = new TCPDF('P', 'mm', [100, 150], true, 'UTF-8', false);
+
+
+================================================================================
+4. MÉTODOS DE CONFIGURACIÓN
+================================================================================
+
+// INFORMACIÓN DEL DOCUMENTO
+$pdf->SetCreator('Nombre del creador');
+$pdf->SetAuthor('Nombre del autor');
+$pdf->SetTitle('Título del PDF');
+$pdf->SetSubject('Tema del documento');
+$pdf->SetKeywords('palabra1, palabra2');
+
+// MÁRGENES
+$pdf->SetMargins(izquierda, arriba, derecha);
+$pdf->SetMargins(15, 15, 15);  // 15mm por todos lados
+
+$pdf->SetHeaderMargin(5);   // Espacio del header
+$pdf->SetFooterMargin(10);  // Espacio del footer
+
+$pdf->SetAutoPageBreak(true, margen_inferior);
+$pdf->SetAutoPageBreak(true, 15);  // Salto automático a 15mm del final
+
+// FUENTE PREDETERMINADA
+$pdf->SetDefaultMonospacedFont('courier');
+
+// COMPRESIÓN
+$pdf->SetCompression(true);  // Comprimir PDF (menor tamaño)
+
+
+================================================================================
+5. MÉTODOS DE PÁGINA
+================================================================================
+
+// AGREGAR PÁGINA
+$pdf->AddPage();                    // Usa orientación predeterminada
+$pdf->AddPage('P');                 // Portrait (vertical)
+$pdf->AddPage('L');                 // Landscape (horizontal)
+$pdf->AddPage('P', 'A4');          // Especificar formato
+$pdf->AddPage('P', [100, 150]);    // Tamaño personalizado
+
+// OBTENER INFORMACIÓN DE PÁGINA
+$pagina = $pdf->getPage();          // Número de página actual
+$total = $pdf->getNumPages();       // Total de páginas
+$ancho = $pdf->getPageWidth();      // Ancho de la página
+$alto = $pdf->getPageHeight();      // Alto de la página
+
+
+================================================================================
+6. MÉTODOS DE FUENTE
+================================================================================
+
+$pdf->SetFont(familia, estilo, tamaño);
+
+FAMILIAS DISPONIBLES:
+  - helvetica    (sin serifa, moderna) ← más común
+  - times        (con serifa, clásica)
+  - courier      (monoespaciada, código)
+  - symbol       (símbolos)
+  - zapfdingbats (iconos)
+
+ESTILOS:
+  - ''  = Normal
+  - 'B' = Bold (negrita)
+  - 'I' = Italic (cursiva)
+  - 'U' = Underline (subrayado)
+  - 'BI' = Bold + Italic
+  - 'BU' = Bold + Underline
+
+TAMAÑOS:
+  - 8  = Muy pequeño
+  - 10 = Pequeño
+  - 12 = Normal
+  - 14 = Subtítulo
+  - 16 = Título
+  - 20+ = Título grande
+
+EJEMPLOS:
+
+$pdf->SetFont('helvetica', 'B', 16);   // Título
+$pdf->SetFont('helvetica', '', 12);    // Texto normal
+$pdf->SetFont('times', 'I', 10);       // Texto cursiva
+$pdf->SetFont('courier', '', 9);       // Código
+
+
+================================================================================
+7. MÉTODOS DE COLOR
+================================================================================
+
+// COLOR DE TEXTO
+$pdf->SetTextColor(r, g, b);
+$pdf->SetTextColor(0, 0, 0);           // Negro
+$pdf->SetTextColor(255, 0, 0);         // Rojo
+$pdf->SetTextColor(30, 58, 95);        // Azul oscuro (#1e3a5f)
+
+// COLOR DE FONDO (para Cell con fill=true)
+$pdf->SetFillColor(r, g, b);
+$pdf->SetFillColor(255, 255, 255);     // Blanco
+$pdf->SetFillColor(245, 230, 211);     // Beige (#f5e6d3)
+
+// COLOR DE LÍNEAS/BORDES
+$pdf->SetDrawColor(r, g, b);
+$pdf->SetDrawColor(0, 0, 0);           // Negro
+$pdf->SetDrawColor(107, 68, 35);       // Café (#6b4423)
+
+// ANCHO DE LÍNEA
+$pdf->SetLineWidth(ancho_en_mm);
+$pdf->SetLineWidth(0.2);               // Línea delgada
+$pdf->SetLineWidth(1);                 // Línea gruesa
+
+
+CONVERTIR HEX A RGB:
+
+<?php
+$hex = '#1e3a5f';
+list($r, $g, $b) = sscanf($hex, "#%02x%02x%02x");
+$pdf->SetTextColor($r, $g, $b);
+?>
+
+
+================================================================================
+8. MÉTODOS DE ESCRITURA
+================================================================================
+
+// CELL - Celda simple
+$pdf->Cell(ancho, alto, texto, borde, salto, alineación, fill);
+
+PARÁMETROS:
+  - ancho: 0 = automático (todo el ancho)
+  - alto: altura en mm
+  - texto: texto a mostrar
+  - borde: 0=sin, 1=todo, 'LRTB'=específico
+  - salto: 0=misma línea, 1=nueva línea, 2=abajo
+  - alineación: 'L'=izq, 'C'=centro, 'R'=der, 'J'=justificado
+  - fill: true=usar color de fondo, false=sin fondo
+
+EJEMPLOS:
+
+// Título centrado sin borde
+$pdf->Cell(0, 10, 'TÍTULO', 0, 1, 'C');
+
+// Celda con borde y fondo
+$pdf->SetFillColor(200, 200, 200);
+$pdf->Cell(50, 8, 'Texto', 1, 0, 'L', true);
+
+// Celda de tabla con bordes específicos
+$pdf->Cell(40, 7, 'Dato', 'LRB', 0, 'C');
+
+
+// MULTICELL - Celda multilínea
+$pdf->MultiCell(ancho, alto, texto, borde, alineación, fill);
+
+EJEMPLO:
+
+$pdf->MultiCell(100, 5,
+    'Este es un texto largo que se ajustará automáticamente...',
+    1, 'J', false);
+
+
+// WRITE - Escritura con salto automático
+$pdf->Write(alto, texto);
+
+EJEMPLO:
+
+$pdf->Write(5, 'Texto que fluye naturalmente...');
+
+
+// WRITEHTML - Renderizar HTML
+$pdf->writeHTML(html, ln, fill, reseth, cell, align);
+
+EJEMPLO:
+
+$html = '<h1>Título</h1><p>Párrafo</p>';
+$pdf->writeHTML($html, true, false, true, false, '');
+
+
+================================================================================
+9. MÉTODOS DE POSICIONAMIENTO
+================================================================================
+
+// SALTO DE LÍNEA
+$pdf->Ln(alto_en_mm);
+$pdf->Ln(5);   // Salto de 5mm
+$pdf->Ln();    // Salto de 1 línea de la fuente actual
+
+// OBTENER POSICIÓN ACTUAL
+$x = $pdf->GetX();  // Posición horizontal
+$y = $pdf->GetY();  // Posición vertical
+
+// ESTABLECER POSICIÓN
+$pdf->SetX(x);      // Solo horizontal
+$pdf->SetY(y);      // Solo vertical
+$pdf->SetXY(x, y);  // Ambas
+
+EJEMPLO:
+
+// Escribir en columnas
+$pdf->SetXY(15, 50);
+$pdf->Cell(80, 5, 'Columna 1');
+
+$pdf->SetXY(100, 50);
+$pdf->Cell(80, 5, 'Columna 2');
+
+
+================================================================================
+10. MÉTODOS DE DIBUJO
+================================================================================
+
+// LÍNEA
+$pdf->Line(x1, y1, x2, y2);
+
+EJEMPLO:
+$pdf->Line(15, 50, 195, 50);  // Línea horizontal
+
+
+// RECTÁNGULO
+$pdf->Rect(x, y, ancho, alto, modo);
+
+MODOS:
+  - 'D' = Draw (solo borde)
+  - 'F' = Fill (solo relleno)
+  - 'DF' = Draw + Fill (borde y relleno)
+
+EJEMPLO:
+$pdf->Rect(15, 50, 100, 30, 'DF');
+
+
+// CÍRCULO
+$pdf->Circle(x, y, radio, inicio, fin, modo);
+
+EJEMPLO:
+$pdf->Circle(50, 50, 20, 0, 360, 'D');
+
+
+================================================================================
+11. MÉTODOS DE IMAGEN
+================================================================================
+
+$pdf->Image(archivo, x, y, ancho, alto, tipo, link);
+
+PARÁMETROS:
+  - archivo: ruta del archivo o URL
+  - x, y: posición (vacío = posición actual)
+  - ancho, alto: dimensiones (0 = automático)
+  - tipo: 'JPG', 'PNG', 'GIF' (automático si vacío)
+  - link: URL de enlace
+
+EJEMPLOS:
+
+// Imagen con tamaño automático
+$pdf->Image('logo.png', 15, 10, 30);
+
+// Imagen centrada
+$x = ($pdf->getPageWidth() - 50) / 2;
+$pdf->Image('banner.jpg', $x, 20, 50);
+
+// Imagen desde URL
+$pdf->Image('https://ejemplo.com/img.jpg', 10, 10, 40);
+
+
+================================================================================
+12. MÉTODOS DE TABLA (HTML)
+================================================================================
+
+HTML BÁSICO:
+
+$html = '
+<table border="1" cellpadding="5">
+    <tr>
+        <th>Header 1</th>
+        <th>Header 2</th>
+    </tr>
+    <tr>
+        <td>Dato 1</td>
+        <td>Dato 2</td>
+    </tr>
+</table>
+';
+
+$pdf->writeHTML($html);
+
+
+HTML CON ESTILOS:
+
+$html = '
+<style>
+    th {
+        background-color: #1e3a5f;
+        color: white;
+        font-weight: bold;
+    }
+    td {
+        border: 1px solid #ccc;
+    }
+</style>
+
+<table border="1">
+    <tr>
+        <th width="50%">Columna 1</th>
+        <th width="50%">Columna 2</th>
+    </tr>
+    <tr>
+        <td align="center">Centro</td>
+        <td align="right">Derecha</td>
+    </tr>
+</table>
+';
+
+
+HTML DINÁMICO:
+
+<?php
+$datos = [
+    ['Juan', 25],
+    ['María', 30],
+];
+
+$html = '<table border="1">';
+foreach ($datos as $fila) {
+    $html .= '<tr>';
+    $html .= '<td>' . $fila[0] . '</td>';
+    $html .= '<td>' . $fila[1] . '</td>';
+    $html .= '</tr>';
+}
+$html .= '</table>';
+
+$pdf->writeHTML($html);
+?>
+
+
+================================================================================
+13. MÉTODOS DE SALIDA
+================================================================================
+
+$pdf->Output(nombre_archivo, destino);
+
+DESTINOS:
+
+'I' = Inline (mostrar en navegador)
+  - El PDF se abre en una pestaña
+  - Útil para vista previa
+
+'D' = Download (descargar archivo)
+  - El navegador descarga el archivo
+  - Útil para reportes que se guardan
+
+'F' = File (guardar en servidor)
+  - Guarda el PDF en el servidor
+  - Requiere ruta completa
+  - Útil para generar PDFs automáticos
+
+'S' = String (devolver como string)
+  - Devuelve el PDF como cadena
+  - Útil para adjuntar a emails
+
+'FI' = File + Inline
+  - Guarda Y muestra
+
+'FD' = File + Download
+  - Guarda Y descarga
+
+
+EJEMPLOS:
+
+// Mostrar en navegador
+$pdf->Output('reporte.pdf', 'I');
+
+// Descargar automáticamente
+$pdf->Output('reporte.pdf', 'D');
+
+// Guardar en servidor
+$ruta = $_SERVER['DOCUMENT_ROOT'] . '/pdfs/reporte.pdf';
+$pdf->Output($ruta, 'F');
+
+// Devolver como string
+$pdfString = $pdf->Output('', 'S');
+mail($to, $subject, $message, $headers, $pdfString);
+
+
+================================================================================
+14. ENCABEZADO Y PIE DE PÁGINA PERSONALIZADOS
+================================================================================
+
+Crear clase extendida:
+
+<?php
+class MiPDF extends TCPDF {
+
+    // ENCABEZADO
+    public function Header() {
+        // Logo
+        $this->Image('logo.png', 15, 10, 30);
+
+        // Título
+        $this->SetFont('helvetica', 'B', 16);
+        $this->Cell(0, 10, 'MI EMPRESA', 0, 1, 'C');
+
+        // Línea
+        $this->Line(15, 25, 195, 25);
+    }
+
+    // PIE DE PÁGINA
+    public function Footer() {
+        // Posición a 15mm del final
+        $this->SetY(-15);
+
+        // Fuente
+        $this->SetFont('helvetica', 'I', 8);
+
+        // Número de página
+        $this->Cell(0, 10,
+            'Página ' . $this->getAliasNumPage() . ' de ' . $this->getAliasNbPages(),
+            0, 0, 'C');
+    }
+}
+
+// Usar la clase personalizada
+$pdf = new MiPDF('P', 'mm', 'A4', true, 'UTF-8', false);
+?>
+
+
+================================================================================
+15. TIPS Y MEJORES PRÁCTICAS
+================================================================================
+
+1. SIEMPRE USAR UTF-8
+   $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
+
+2. CONFIGURAR MÁRGENES AL INICIO
+   $pdf->SetMargins(15, 15, 15);
+   $pdf->SetAutoPageBreak(true, 15);
+
+3. USAR HTML PARA TABLAS COMPLEJAS
+   Es más fácil que usar Cell() manualmente
+
+4. FORMATEAR NÚMEROS
+   number_format($numero, 2) para 2 decimales
+
+5. ESCAPAR HTML SI ES NECESARIO
+   htmlspecialchars($texto) o esc($texto) en CodeIgniter
+
+6. PROBAR PRIMERO CON 'I' (Inline)
+   Para ver el PDF en el navegador mientras desarrollas
+
+7. USAR COLORES CONSISTENTES
+   Define los colores de tu marca y úsalos siempre
+
+8. VERIFICAR QUE TCPDF ESTÉ INSTALADO
+   if (!class_exists('TCPDF')) { ... }
+
+9. NO USAR echo/print ANTES DE Output()
+   Causará errores en la generación del PDF
+
+10. COMPRIMIR EL PDF
+    $pdf->SetCompression(true); para archivos más pequeños
+
+
+================================================================================
+FIN DE LA GUÍA RÁPIDA
+================================================================================

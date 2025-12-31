@@ -14,7 +14,7 @@ echo "<!DOCTYPE html>
 </head>
 <body>";
 
-echo "<h1>🔍 Diagnóstico Completo del Sistema</h1>";
+echo "<h1>Diagnóstico Completo del Sistema</h1>";
 
 // 1. Verificar PHP
 echo "<h2>1. Información de PHP</h2>";
@@ -26,9 +26,9 @@ echo "</div>";
 // 2. Verificar extensiones
 echo "<h2>2. Extensiones de Base de Datos</h2>";
 echo "<div class='info'>";
-echo "MySQLi: " . (extension_loaded('mysqli') ? "<span class='success'>✅ Habilitada</span>" : "<span class='error'>❌ NO habilitada</span>") . "<br>";
-echo "PDO: " . (extension_loaded('pdo') ? "<span class='success'>✅ Habilitada</span>" : "<span class='error'>❌ NO habilitada</span>") . "<br>";
-echo "PDO MySQL: " . (extension_loaded('pdo_mysql') ? "<span class='success'>✅ Habilitada</span>" : "<span class='error'>❌ NO habilitada</span>");
+echo "MySQLi: " . (extension_loaded('mysqli') ? "<span class='success'>Habilitada</span>" : "<span class='error'>NO habilitada</span>") . "<br>";
+echo "PDO: " . (extension_loaded('pdo') ? "<span class='success'>Habilitada</span>" : "<span class='error'>NO habilitada</span>") . "<br>";
+echo "PDO MySQL: " . (extension_loaded('pdo_mysql') ? "<span class='success'>Habilitada</span>" : "<span class='error'>NO habilitada</span>");
 echo "</div>";
 
 // 3. Probar conexión MySQLi directa
@@ -49,14 +49,14 @@ echo "Puerto: <strong>3306</strong><br><br>";
 $conn = @new mysqli($host, $username, $password, $dbname);
 
 if ($conn->connect_error) {
-    echo "<span class='error'>❌ ERROR de conexión MySQLi:</span><br>";
+    echo "<span class='error'>ERROR de conexión MySQLi:</span><br>";
     echo "<strong>Código:</strong> " . $conn->connect_errno . "<br>";
     echo "<strong>Mensaje:</strong> " . $conn->connect_error . "<br>";
 } else {
-    echo "<span class='success'>✅ Conexión MySQLi EXITOSA</span><br>";
+    echo "<span class='success'>Conexión MySQLi EXITOSA</span><br>";
     echo "Versión del servidor: <strong>" . $conn->server_info . "</strong><br>";
     echo "Versión del cliente: <strong>" . $conn->client_info . "</strong><br><br>";
-    
+
     // Listar tablas
     $result = $conn->query("SHOW TABLES");
     if ($result && $result->num_rows > 0) {
@@ -67,7 +67,7 @@ if ($conn->connect_error) {
         }
         echo "</ul>";
     } else {
-        echo "<span class='error'>⚠️ No hay tablas en la base de datos</span><br>";
+        echo "<span class='error'>ADVERTENCIA: No hay tablas en la base de datos</span><br>";
     }
     
     $conn->close();
@@ -80,11 +80,11 @@ echo "<div class='info'>";
 
 $envPath = dirname(__DIR__) . '/.env';
 if (file_exists($envPath)) {
-    echo "<span class='success'>✅ Archivo .env encontrado</span><br>";
+    echo "<span class='success'>Archivo .env encontrado</span><br>";
     echo "Ubicación: <code>$envPath</code><br>";
-    echo "Permisos de lectura: " . (is_readable($envPath) ? "<span class='success'>✅ SÍ</span>" : "<span class='error'>❌ NO</span>") . "<br>";
+    echo "Permisos de lectura: " . (is_readable($envPath) ? "<span class='success'>SÍ</span>" : "<span class='error'>NO</span>") . "<br>";
 } else {
-    echo "<span class='error'>❌ Archivo .env NO encontrado</span><br>";
+    echo "<span class='error'>Archivo .env NO encontrado</span><br>";
     echo "Buscado en: <code>$envPath</code><br>";
 }
 echo "</div>";
@@ -105,7 +105,7 @@ foreach ($dbVars as $var) {
     if ($value !== false) {
         echo "$var = <strong>$value</strong><br>";
     } else {
-        echo "$var = <span class='error'>❌ No definida</span><br>";
+        echo "$var = <span class='error'>No definida</span><br>";
     }
 }
 echo "</div>";
@@ -129,14 +129,14 @@ try {
     $db = \Config\Database::connect();
     
     if ($db->connID) {
-        echo "<span class='success'>✅ Conexión CodeIgniter EXITOSA</span><br>";
+        echo "<span class='success'>Conexión CodeIgniter EXITOSA</span><br>";
         echo "Base de datos conectada: <strong>" . $db->database . "</strong>";
     } else {
-        echo "<span class='error'>❌ Error en conexión CodeIgniter</span>";
+        echo "<span class='error'>Error en conexión CodeIgniter</span>";
     }
-    
+
 } catch (\Exception $e) {
-    echo "<span class='error'>❌ Excepción en CodeIgniter:</span><br>";
+    echo "<span class='error'>Excepción en CodeIgniter:</span><br>";
     echo "<code>" . $e->getMessage() . "</code><br>";
     echo "<strong>Archivo:</strong> " . $e->getFile() . "<br>";
     echo "<strong>Línea:</strong> " . $e->getLine();
@@ -144,14 +144,35 @@ try {
 
 echo "</div>";
 
+// 7. Verificar librerías de reportes
+echo "<h2>7. Librerías para Reportes</h2>";
+echo "<div class='info'>";
+
+// Verificar TCPDF
+if (class_exists('TCPDF')) {
+    echo "TCPDF: <span class='success'>Instalada correctamente</span><br>";
+} else {
+    echo "TCPDF: <span class='error'>NO instalada</span> - Ejecutar: composer require tecnickcom/tcpdf<br>";
+}
+
+// Verificar PhpSpreadsheet
+if (class_exists('PhpOffice\PhpSpreadsheet\Spreadsheet')) {
+    echo "PhpSpreadsheet: <span class='success'>Instalada correctamente</span><br>";
+} else {
+    echo "PhpSpreadsheet: <span class='error'>NO instalada</span> - Ejecutar: composer require phpoffice/phpspreadsheet<br>";
+}
+
+// Verificar extensión GD
+echo "<br><strong>Extensión GD (requerida para PhpSpreadsheet):</strong><br>";
+if (extension_loaded('gd')) {
+    echo "GD: <span class='success'>Habilitada</span><br>";
+    $gdInfo = gd_info();
+    echo "Versión GD: <strong>" . $gdInfo['GD Version'] . "</strong><br>";
+} else {
+    echo "GD: <span class='error'>NO habilitada</span> - Habilitar en php.ini: extension=gd<br>";
+}
+
+echo "</div>";
+
 echo "</body></html>";
 ?>
-```
-
----
-
-## 🌐 EJECUTA EL DIAGNÓSTICO
-
-**Accede a:**
-```
-http://localhost/gestion_citas/public/diagnostico.php

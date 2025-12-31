@@ -1,0 +1,541 @@
+================================================================================
+  PLAN DE TESTING - SEMANA 8
+  Módulo Administrativo y Reportes
+  Sistema de Gestión de Citas - Barbería
+================================================================================
+
+FECHA: <?= date('Y-m-d H:i:s') ?>
+
+OBJETIVO:
+---------
+Verificar que todas las funcionalidades del módulo de reportes funcionen
+correctamente, que todos los links y botones sean accesibles, y que el diseño
+sea consistente con el resto de la aplicación.
+
+
+================================================================================
+SECCIÓN 1: VERIFICACIÓN DE NAVEGACIÓN PRINCIPAL
+================================================================================
+
+TEST 1.1: Acceso desde el Dashboard Admin
+------------------------------------------
+URL: http://localhost/gestion_citas/public/admin/dashboard
+PASOS:
+  1. Iniciar sesión como administrador
+  2. Ir al dashboard admin
+  3. Buscar el enlace "Reportes y Estadísticas" en la lista de accesos rápidos
+  4. Click en "Reportes y Estadísticas"
+RESULTADO ESPERADO:
+  ✓ Debe redirigir a /admin/reportes
+  ✓ Debe mostrar el panel de control de reportes
+  ✓ Debe mostrar KPIs (Total citas, completadas, canceladas, ingresos)
+
+
+TEST 1.2: Navegación directa a Reportes
+---------------------------------------
+URL: http://localhost/gestion_citas/public/admin/reportes
+RESULTADO ESPERADO:
+  ✓ Carga la página sin errores
+  ✓ Muestra el navbar con logo y usuario
+  ✓ Muestra el título "Panel de Control - Reportes y Estadísticas"
+  ✓ Muestra filtros de fecha
+  ✓ Muestra 4 tarjetas de KPIs
+  ✓ Muestra gráfica de evolución de citas
+  ✓ Muestra botones de reportes detallados
+  ✓ Muestra tabla de top empleados
+  ✓ Muestra tabla de servicios más solicitados
+  ✓ Muestra footer
+
+
+================================================================================
+SECCIÓN 2: VERIFICACIÓN DE FILTROS Y BÚSQUEDA
+================================================================================
+
+TEST 2.1: Filtros de Fecha en Dashboard
+---------------------------------------
+URL: http://localhost/gestion_citas/public/admin/reportes
+PASOS:
+  1. Cambiar fecha inicio a: 2025-01-01
+  2. Cambiar fecha fin a: 2025-01-31
+  3. Click en botón "Filtrar"
+RESULTADO ESPERADO:
+  ✓ La página recarga con los parámetros en la URL
+  ✓ Los KPIs se actualizan según el período seleccionado
+  ✓ La gráfica muestra datos del período seleccionado
+  ✓ Las tablas muestran datos del período
+
+
+TEST 2.2: Filtros en Reporte por Fecha
+--------------------------------------
+URL: http://localhost/gestion_citas/public/admin/reportes/por-fecha
+PASOS:
+  1. Ingresar fechas personalizadas
+  2. Click en "Filtrar"
+RESULTADO ESPERADO:
+  ✓ Muestra tabla filtrada por el rango de fechas
+  ✓ Las estadísticas corresponden al período
+  ✓ El contador de registros es correcto
+
+
+================================================================================
+SECCIÓN 3: VERIFICACIÓN DE REPORTES DETALLADOS
+================================================================================
+
+TEST 3.1: Reporte por Fecha
+---------------------------
+URL: http://localhost/gestion_citas/public/admin/reportes/por-fecha
+VERIFICAR:
+  ✓ Carga sin errores
+  ✓ Muestra formulario de filtros (fecha inicio, fecha fin)
+  ✓ Muestra botones "Filtrar", "PDF", "Excel"
+  ✓ Muestra 4 tarjetas de resumen (Total, Completadas, Canceladas, Ingresos)
+  ✓ Muestra tabla completa de citas con: Fecha, Hora, Cliente, Empleado, Servicio, Precio, Estado
+  ✓ Los badges de estado tienen colores correctos:
+    - Pendiente: amarillo (warning)
+    - Confirmada: cyan (info)
+    - En Proceso: azul (primary)
+    - Completada: verde (success)
+    - Cancelada: rojo (danger)
+  ✓ Botón "Volver a Reportes" funciona
+  ✓ Botón "Ir al Dashboard" funciona
+
+
+TEST 3.2: Reporte por Empleado
+------------------------------
+URL: http://localhost/gestion_citas/public/admin/reportes/por-empleado
+VERIFICAR:
+  ✓ Carga sin errores
+  ✓ Muestra formulario de filtros
+  ✓ Muestra botones "Filtrar", "PDF", "Excel"
+  ✓ Muestra tabla con columnas:
+    - Empleado, Especialidad, Total Citas, Completadas, Canceladas,
+      Pendientes, Ingresos, Horas Trabajadas
+  ✓ Los badges tienen colores correctos
+  ✓ Muestra gráfica de barras con ingresos por empleado
+  ✓ La gráfica usa Chart.js y se visualiza correctamente
+  ✓ Botones de navegación funcionan
+
+
+TEST 3.3: Reporte por Servicio
+------------------------------
+URL: http://localhost/gestion_citas/public/admin/reportes/por-servicio
+VERIFICAR:
+  ✓ Carga sin errores
+  ✓ Muestra formulario de filtros
+  ✓ Muestra botones "Filtrar", "PDF", "Excel"
+  ✓ Muestra tabla con columnas:
+    - Servicio, Precio Unitario, Duración, Total Citas, Completadas,
+      Canceladas, Ingresos Generados, % del Total
+  ✓ La columna "% del Total" muestra una barra de progreso visual
+  ✓ Muestra fila de TOTALES al final
+  ✓ Muestra 2 gráficas:
+    - Gráfica de pastel: Distribución de Citas
+    - Gráfica de dona: Distribución de Ingresos
+  ✓ Las gráficas usan colores consistentes
+  ✓ Botones de navegación funcionan
+
+
+TEST 3.4: Citas Realizadas
+--------------------------
+URL: http://localhost/gestion_citas/public/admin/reportes/citas-realizadas
+VERIFICAR:
+  ✓ Carga sin errores
+  ✓ Muestra formulario de filtros
+  ✓ Muestra botones "Filtrar", "PDF", "Excel"
+  ✓ Muestra alerta verde con 3 KPIs:
+    - Citas Completadas
+    - Ingresos Totales
+    - Promedio por Cita
+  ✓ Muestra tabla con columnas:
+    - #, Fecha, Hora, Cliente, Teléfono, Empleado, Servicio, Duración, Precio
+  ✓ Muestra fila de TOTAL INGRESOS en verde al final
+  ✓ Botón "Ver Citas Pendientes" funciona
+  ✓ Botones de navegación funcionan
+
+
+TEST 3.5: Citas Pendientes
+--------------------------
+URL: http://localhost/gestion_citas/public/admin/reportes/citas-pendientes
+VERIFICAR:
+  ✓ Carga sin errores
+  ✓ Muestra formulario de filtros (fechas opcionales)
+  ✓ Botón "Limpiar" funciona
+  ✓ Muestra alerta amarilla con 3 KPIs:
+    - Citas Pendientes
+    - Sin Confirmar
+    - Confirmadas
+  ✓ Muestra tabla con columnas:
+    - #, Fecha, Hora, Cliente, Teléfono, Empleado, Servicio, Precio, Estado, Acciones
+  ✓ Las citas de HOY muestran badge rojo "HOY"
+  ✓ Las citas de MAÑANA muestran badge amarillo "MAÑANA"
+  ✓ Las filas de citas próximas tienen fondo verde claro
+  ✓ El teléfono es un link clickeable (tel:)
+  ✓ Botones de acciones:
+    - Ojo (Ver): redirige a /admin/citas/ver/{id}
+    - Lápiz (Editar): redirige a /admin/citas/editar/{id}
+  ✓ Botón "Ver Citas Realizadas" funciona
+  ✓ Botón "Ir al Calendario" funciona
+
+
+================================================================================
+SECCIÓN 4: VERIFICACIÓN DE GRÁFICAS
+================================================================================
+
+TEST 4.1: Gráfica de Evolución (Dashboard)
+------------------------------------------
+VERIFICAR:
+  ✓ La gráfica se renderiza sin errores
+  ✓ Usa Chart.js versión 4.4.0
+  ✓ Muestra 3 líneas:
+    - Total de Citas (azul oscuro)
+    - Completadas (verde)
+    - Canceladas (rojo)
+  ✓ Las fechas en el eje X están formateadas (ej: "01 dic")
+  ✓ El eje Y comienza en 0
+  ✓ La leyenda está visible arriba
+  ✓ Es responsive (se ajusta al tamaño de pantalla)
+
+
+TEST 4.2: Gráfica de Barras (Por Empleado)
+------------------------------------------
+VERIFICAR:
+  ✓ Muestra barras con ingresos por empleado
+  ✓ Color de barras: café (#6b4423)
+  ✓ Borde de barras: azul oscuro (#1e3a5f)
+  ✓ Los valores del eje Y muestran formato de moneda ($)
+  ✓ Es responsive
+
+
+TEST 4.3: Gráficas de Pastel y Dona (Por Servicio)
+--------------------------------------------------
+VERIFICAR:
+  ✓ Gráfica de pastel muestra distribución de citas
+  ✓ Gráfica de dona muestra distribución de ingresos
+  ✓ Usan una paleta de 10 colores consistente
+  ✓ La leyenda está en la parte inferior
+  ✓ El tooltip de la gráfica de ingresos muestra formato de moneda
+  ✓ Son responsive
+
+
+================================================================================
+SECCIÓN 5: VERIFICACIÓN DE BOTONES DE EXPORTACIÓN
+================================================================================
+
+TEST 5.1: Exportar a PDF - General
+----------------------------------
+URL: http://localhost/gestion_citas/public/admin/reportes/exportarPDF?tipo=general&fecha_inicio=2025-01-01&fecha_fin=2025-01-31
+VERIFICAR:
+  ✓ Si TCPDF está instalado:
+    - Descarga un archivo PDF
+    - El nombre del archivo es: reporte_general_YYYY-MM-DD.pdf
+    - El PDF contiene tabla con estadísticas generales
+  ✓ Si TCPDF NO está instalado:
+    - Muestra mensaje de error indicando que falta la librería
+    - El mensaje incluye el comando de instalación
+
+
+TEST 5.2: Exportar a PDF - Por Empleado
+---------------------------------------
+URL: ...exportarPDF?tipo=empleado...
+VERIFICAR:
+  ✓ Descarga archivo reporte_empleado_YYYY-MM-DD.pdf
+  ✓ Contiene tabla con datos de empleados
+
+
+TEST 5.3: Exportar a PDF - Por Servicio
+---------------------------------------
+URL: ...exportarPDF?tipo=servicio...
+VERIFICAR:
+  ✓ Descarga archivo reporte_servicio_YYYY-MM-DD.pdf
+  ✓ Contiene tabla con datos de servicios
+
+
+TEST 5.4: Exportar a PDF - Citas Realizadas
+-------------------------------------------
+URL: ...exportarPDF?tipo=realizadas...
+VERIFICAR:
+  ✓ Descarga archivo reporte_realizadas_YYYY-MM-DD.pdf
+  ✓ Contiene listado de citas completadas
+
+
+TEST 5.5: Exportar a Excel - General
+------------------------------------
+URL: ...exportarExcel?tipo=general...
+VERIFICAR:
+  ✓ Si PhpSpreadsheet está instalado:
+    - Descarga un archivo Excel (.xlsx)
+    - El nombre del archivo es: reporte_general_YYYY-MM-DD.xlsx
+    - El archivo se abre correctamente en Excel/LibreOffice
+    - Contiene las estadísticas generales
+  ✓ Si PhpSpreadsheet NO está instalado:
+    - Muestra mensaje de error con instrucciones
+
+
+TEST 5.6: Exportar a Excel - Otros Tipos
+----------------------------------------
+VERIFICAR:
+  ✓ Exportar por empleado funciona
+  ✓ Exportar por servicio funciona
+  ✓ Exportar citas realizadas funciona
+  ✓ Todos los archivos tienen formato .xlsx
+  ✓ Todas las columnas tienen ancho automático
+
+
+================================================================================
+SECCIÓN 6: VERIFICACIÓN DE DISEÑO Y CONSISTENCIA
+================================================================================
+
+TEST 6.1: Paleta de Colores
+---------------------------
+VERIFICAR:
+  ✓ Se usa la paleta del proyecto:
+    - Azul oscuro: #1e3a5f (navbar, headers de cards)
+    - Café: #6b4423 (botones primarios)
+    - Beige: #f5e6d3 (fondo de body)
+    - Gris: #495057 (textos)
+  ✓ Los colores son consistentes en todas las vistas
+
+
+TEST 6.2: Componentes Bootstrap
+-------------------------------
+VERIFICAR:
+  ✓ Usa Bootstrap 5.3.0
+  ✓ Cards tienen border de 2px y border-radius de 15px
+  ✓ Los card-header tienen fondo azul oscuro
+  ✓ Las tablas tienen thead con fondo azul oscuro
+  ✓ Los botones usan las clases correctas
+  ✓ Los badges usan los colores semánticos correctos
+
+
+TEST 6.3: Iconos Bootstrap Icons
+--------------------------------
+VERIFICAR:
+  ✓ Usa Bootstrap Icons 1.10.0
+  ✓ Todos los iconos se muestran correctamente:
+    - bi-graph-up (reportes)
+    - bi-calendar-range (por fecha)
+    - bi-people (por empleado)
+    - bi-gear (por servicio)
+    - bi-check-circle (citas realizadas)
+    - bi-clock-history (citas pendientes)
+    - bi-file-pdf (exportar PDF)
+    - bi-file-excel (exportar Excel)
+    - etc.
+
+
+TEST 6.4: Responsividad
+----------------------
+VERIFICAR en diferentes tamaños:
+  ✓ Desktop (1920x1080): Todo se ve correctamente
+  ✓ Tablet (768x1024): Las columnas se ajustan
+  ✓ Mobile (375x667):
+    - Las tablas son scrolleables horizontalmente (table-responsive)
+    - Los botones se apilan verticalmente
+    - Las cards se muestran en columna
+
+
+TEST 6.5: Footer
+---------------
+VERIFICAR:
+  ✓ El footer está presente en todas las vistas
+  ✓ Tiene fondo azul oscuro
+  ✓ Muestra la información del proyecto:
+    - Sistema de Gestión de Citas
+    - Barbería y Spa - Proyecto DICO TELECOMUNICACIONES
+    - Desarrollado por: Ilich Esteban Reyes Botia
+    - Aprendiz SENA
+
+
+TEST 6.6: Navbar
+---------------
+VERIFICAR:
+  ✓ El navbar es consistente en todas las vistas
+  ✓ Muestra el logo y nombre "Admin - Barbería"
+  ✓ Muestra el nombre del usuario logueado
+  ✓ El botón "Salir" funciona correctamente
+
+
+================================================================================
+SECCIÓN 7: VERIFICACIÓN DE ENLACES Y NAVEGACIÓN
+================================================================================
+
+TEST 7.1: Enlaces del Dashboard de Reportes
+-------------------------------------------
+DESDE: /admin/reportes
+VERIFICAR TODOS LOS ENLACES:
+  1. ✓ Logo navbar → /admin/dashboard
+  2. ✓ Botón "Salir" → /logout
+  3. ✓ "Reporte por Fecha" → /admin/reportes/por-fecha
+  4. ✓ "Reporte por Empleado" → /admin/reportes/por-empleado
+  5. ✓ "Reporte por Servicio" → /admin/reportes/por-servicio
+  6. ✓ "Citas Realizadas" → /admin/reportes/citas-realizadas
+  7. ✓ "Ver Reporte Completo" (empleados) → /admin/reportes/por-empleado
+  8. ✓ "Ver Reporte Completo" (servicios) → /admin/reportes/por-servicio
+  9. ✓ "Volver al Dashboard" → /admin/dashboard
+  10. ✓ "Exportar PDF" → URL correcta con parámetros
+
+
+TEST 7.2: Enlaces de Navegación Interna
+---------------------------------------
+VERIFICAR desde cada vista de reportes:
+  ✓ "Volver a Reportes" regresa a /admin/reportes
+  ✓ "Ir al Dashboard" va a /admin/dashboard
+  ✓ "Ir al Calendario" va a /admin/citas
+  ✓ "Ver Citas Pendientes" va a /admin/reportes/citas-pendientes
+  ✓ "Ver Citas Realizadas" va a /admin/reportes/citas-realizadas
+
+
+TEST 7.3: Enlaces de Acciones
+-----------------------------
+DESDE: /admin/reportes/citas-pendientes
+VERIFICAR:
+  ✓ Botón "Ver" (ojo) → /admin/citas/ver/{id}
+  ✓ Botón "Editar" (lápiz) → /admin/citas/editar/{id}
+  ✓ Link de teléfono → abre marcador (tel:{numero})
+
+
+================================================================================
+SECCIÓN 8: PRUEBAS DE SEGURIDAD Y PERMISOS
+================================================================================
+
+TEST 8.1: Acceso con Usuario No Autenticado
+-------------------------------------------
+PASOS:
+  1. Cerrar sesión
+  2. Intentar acceder a /admin/reportes
+RESULTADO ESPERADO:
+  ✓ Redirige a /login
+  ✓ No muestra ningún dato
+
+
+TEST 8.2: Acceso con Usuario Cliente
+------------------------------------
+PASOS:
+  1. Iniciar sesión como cliente
+  2. Intentar acceder a /admin/reportes
+RESULTADO ESPERADO:
+  ✓ Muestra error 403 o redirige al dashboard del cliente
+  ✓ No permite el acceso
+
+
+TEST 8.3: Acceso con Usuario Empleado
+-------------------------------------
+PASOS:
+  1. Iniciar sesión como empleado
+  2. Intentar acceder a /admin/reportes
+RESULTADO ESPERADO:
+  ✓ Muestra error 403 o redirige al dashboard del empleado
+  ✓ No permite el acceso
+
+
+TEST 8.4: Acceso con Usuario Admin
+----------------------------------
+PASOS:
+  1. Iniciar sesión como administrador
+  2. Acceder a /admin/reportes
+RESULTADO ESPERADO:
+  ✓ Acceso permitido
+  ✓ Muestra todos los datos
+
+
+================================================================================
+SECCIÓN 9: PRUEBAS DE DATOS Y EDGE CASES
+================================================================================
+
+TEST 9.1: Sin Datos en el Período
+---------------------------------
+PASOS:
+  1. Filtrar por un rango de fechas sin citas
+  2. Ejemplo: fecha_inicio=2030-01-01, fecha_fin=2030-12-31
+RESULTADO ESPERADO:
+  ✓ No muestra errores
+  ✓ Los KPIs muestran 0
+  ✓ Las tablas muestran mensaje "No hay citas en este período"
+  ✓ Las gráficas no se muestran o muestran vacías
+
+
+TEST 9.2: Período con Muchos Datos
+----------------------------------
+PASOS:
+  1. Filtrar por un período amplio (ej: todo el año)
+RESULTADO ESPERADO:
+  ✓ La página carga sin timeout
+  ✓ Todos los datos se muestran
+  ✓ Las gráficas se renderizan correctamente
+
+
+TEST 9.3: Fechas Inválidas
+--------------------------
+PASOS:
+  1. Ingresar fecha_fin < fecha_inicio
+RESULTADO ESPERADO:
+  ✓ Muestra error o resultados vacíos
+  ✓ No rompe la aplicación
+
+
+================================================================================
+SECCIÓN 10: PRUEBAS DE RENDIMIENTO
+================================================================================
+
+TEST 10.1: Tiempo de Carga
+--------------------------
+VERIFICAR:
+  ✓ Dashboard de reportes carga en < 2 segundos
+  ✓ Reportes detallados cargan en < 3 segundos
+  ✓ Gráficas se renderizan en < 1 segundo
+  ✓ Exportaciones se generan en < 5 segundos
+
+
+TEST 10.2: Queries a Base de Datos
+----------------------------------
+VERIFICAR:
+  ✓ No hay N+1 queries
+  ✓ Se usan JOINs eficientemente
+  ✓ Hay índices en las tablas (fecha_cita, estado, etc.)
+
+
+================================================================================
+RESUMEN DEL TESTING
+================================================================================
+
+MÓDULO: Reportes y Estadísticas (Semana 8)
+
+VISTAS CREADAS: 6
+  1. index.php - Dashboard de Reportes
+  2. por_fecha.php - Reporte por Fecha
+  3. por_empleado.php - Reporte por Empleado
+  4. por_servicio.php - Reporte por Servicio
+  5. citas_realizadas.php - Citas Completadas
+  6. citas_pendientes.php - Citas Pendientes
+
+FUNCIONALIDADES IMPLEMENTADAS:
+  - Panel de control con KPIs
+  - Filtros por rango de fechas
+  - Reportes detallados por fecha, empleado y servicio
+  - Listado de citas realizadas y pendientes
+  - Gráficas interactivas (líneas, barras, pastel, dona)
+  - Exportación a PDF (TCPDF)
+  - Exportación a Excel (PhpSpreadsheet)
+
+TECNOLOGÍAS UTILIZADAS:
+  - CodeIgniter 4
+  - Bootstrap 5.3.0
+  - Bootstrap Icons 1.10.0
+  - Chart.js 4.4.0
+  - TCPDF 6.6
+  - PhpSpreadsheet 1.29
+
+RUTAS CONFIGURADAS: 8
+  - /admin/reportes
+  - /admin/reportes/por-fecha
+  - /admin/reportes/por-empleado
+  - /admin/reportes/por-servicio
+  - /admin/reportes/citas-realizadas
+  - /admin/reportes/citas-pendientes
+  - /admin/reportes/exportarPDF
+  - /admin/reportes/exportarExcel
+
+
+================================================================================
+FIN DEL PLAN DE TESTING
+================================================================================

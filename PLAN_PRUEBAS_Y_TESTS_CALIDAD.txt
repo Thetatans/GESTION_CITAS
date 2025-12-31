@@ -1,0 +1,1673 @@
+================================================================================
+           PLAN COMPLETO DE PRUEBAS DE CALIDAD Y TESTS
+         SISTEMA DE GESTIÓN DE CITAS - BARBERÍA
+================================================================================
+
+Fecha de creación: 26 de Diciembre 2025
+Versión del documento: 1.0
+Aplicación: Sistema de Gestión de Citas (CodeIgniter 4)
+
+================================================================================
+ÍNDICE
+================================================================================
+
+1. PRUEBAS FUNCIONALES POR MÓDULO
+2. PRUEBAS DE SEGURIDAD Y AUTENTICACIÓN
+3. PRUEBAS DE VALIDACIÓN DE DATOS
+4. PRUEBAS DE BASE DE DATOS E INTEGRIDAD
+5. PRUEBAS DE INTERFAZ DE USUARIO (UI/UX)
+6. PRUEBAS DE RENDIMIENTO
+7. PRUEBAS DE INTEGRACIÓN
+8. PRUEBAS DE REPORTES Y EXPORTACIÓN
+9. PRUEBAS DE COMPATIBILIDAD
+10. PRUEBAS DE REGRESIÓN
+11. CHECKLIST DE CALIDAD GENERAL
+12. HERRAMIENTAS RECOMENDADAS PARA TESTING
+
+
+================================================================================
+1. PRUEBAS FUNCIONALES POR MÓDULO
+================================================================================
+
+1.1 MÓDULO DE AUTENTICACIÓN (Auth.php)
+-------------------------------------------
+
+TEST 1.1.1: Login exitoso
+□ Ingresar con admin@barberia.com / ilich123
+□ Verificar redirección a /admin/dashboard
+□ Verificar que $_SESSION contiene usuario_id, usuario_email, usuario_rol
+□ Verificar que "logueado" es true
+
+TEST 1.1.2: Login con credenciales incorrectas
+□ Ingresar email válido pero password incorrecta
+□ Verificar mensaje de error: "Credenciales incorrectas"
+□ Verificar que NO se crea sesión
+□ Verificar que permanece en /login
+
+TEST 1.1.3: Login con usuario inexistente
+□ Ingresar email que no existe en BD
+□ Verificar mensaje de error apropiado
+□ Verificar que NO se crea sesión
+
+TEST 1.1.4: Login con usuario inactivo/suspendido
+□ Cambiar estado de usuario a "inactivo" en BD
+□ Intentar login
+□ Verificar mensaje: "Tu cuenta está inactiva o suspendida"
+□ Verificar que NO se permite el acceso
+
+TEST 1.1.5: Función "Recordarme"
+□ Marcar checkbox "Recordarme" al hacer login
+□ Verificar creación de cookie con email (30 días)
+□ Cerrar navegador y volver a abrir
+□ Verificar que el email se autocompleta
+
+TEST 1.1.6: Registro de nuevo cliente
+□ Completar formulario de registro con datos válidos
+□ Verificar creación de registro en tabla "usuarios"
+□ Verificar creación de registro en tabla "clientes"
+□ Verificar password hasheado con bcrypt
+□ Verificar redirección a /login
+□ Verificar mensaje de éxito
+
+TEST 1.1.7: Registro con email duplicado
+□ Intentar registrar email ya existente
+□ Verificar mensaje de error: "El email ya está registrado"
+□ Verificar que NO se crea usuario duplicado
+
+TEST 1.1.8: Registro con contraseñas no coincidentes
+□ Ingresar password diferente en "confirmar password"
+□ Verificar mensaje de error de validación
+□ Verificar que NO se crea usuario
+
+TEST 1.1.9: Logout
+□ Iniciar sesión con cualquier usuario
+□ Hacer clic en "Cerrar sesión"
+□ Verificar destrucción de sesión (session_destroy)
+□ Verificar redirección a /login
+□ Intentar acceder a ruta protegida
+□ Verificar redirección a /login
+
+TEST 1.1.10: Cambio de contraseña
+□ Iniciar sesión con usuario
+□ Ir a /cambiar-password
+□ Ingresar contraseña actual correcta
+□ Ingresar nueva contraseña y confirmación
+□ Verificar actualización en BD
+□ Hacer logout y login con nueva contraseña
+□ Verificar acceso exitoso
+
+TEST 1.1.11: Cambio de contraseña con contraseña actual incorrecta
+□ Ingresar contraseña actual incorrecta
+□ Verificar mensaje de error
+□ Verificar que NO se actualiza la contraseña
+
+TEST 1.1.12: Actualización de último acceso
+□ Hacer login con cualquier usuario
+□ Verificar que campo "ultimo_acceso" se actualiza en BD
+□ Verificar timestamp reciente
+
+
+-------------------------------------------
+1.2 MÓDULO DE GESTIÓN DE CLIENTES (Admin/Clientes.php)
+-------------------------------------------
+
+TEST 1.2.1: Listar todos los clientes
+□ Acceder a /admin/clientes
+□ Verificar que se muestran todos los clientes de la BD
+□ Verificar datos: nombre, apellido, teléfono, email, acciones
+
+TEST 1.2.2: Buscar cliente por nombre
+□ Ingresar nombre de cliente en buscador
+□ Presionar "Buscar"
+□ Verificar que filtra resultados correctamente
+□ Verificar resultados parciales (ej: "juan" encuentra "Juan Carlos")
+
+TEST 1.2.3: Buscar cliente por teléfono
+□ Ingresar teléfono en buscador
+□ Verificar filtro correcto
+□ Verificar búsqueda parcial
+
+TEST 1.2.4: Buscar cliente por email
+□ Ingresar email en buscador
+□ Verificar filtro correcto
+
+TEST 1.2.5: Crear nuevo cliente
+□ Ir a /admin/clientes/crear
+□ Completar todos los campos requeridos:
+  - Nombre (mín 3 caracteres)
+  - Apellido (mín 3 caracteres)
+  - Teléfono (7-20 dígitos)
+  - Email válido y único
+  - Fecha de nacimiento
+  - Género
+  - Dirección
+  - Password (mín 8 caracteres)
+□ Verificar creación en tabla "usuarios"
+□ Verificar creación en tabla "clientes"
+□ Verificar mensaje de éxito
+□ Verificar redirección a listado
+
+TEST 1.2.6: Crear cliente con datos inválidos
+□ Intentar crear con nombre de 2 caracteres → Error
+□ Intentar crear con teléfono de 5 dígitos → Error
+□ Intentar crear con email inválido (ej: "noesuncorreo") → Error
+□ Intentar crear con password de 6 caracteres → Error
+□ Verificar que NO se crea el registro
+
+TEST 1.2.7: Editar cliente existente
+□ Ir a /admin/clientes/editar/{id}
+□ Modificar nombre, apellido, teléfono
+□ Guardar cambios
+□ Verificar actualización en BD
+□ Verificar mensaje de éxito
+
+TEST 1.2.8: Editar cliente con email duplicado
+□ Intentar cambiar email a uno ya existente
+□ Verificar mensaje de error
+□ Verificar que NO se actualiza
+
+TEST 1.2.9: Eliminar cliente
+□ Hacer clic en "Eliminar" en un cliente
+□ Verificar mensaje de confirmación (SweetAlert o confirm)
+□ Confirmar eliminación
+□ Verificar eliminación en tabla "clientes"
+□ Verificar eliminación en tabla "usuarios"
+□ Verificar mensaje de éxito
+
+TEST 1.2.10: Eliminar cliente con citas asociadas
+□ Intentar eliminar cliente que tiene citas
+□ Verificar comportamiento:
+  - ¿Permite eliminación? → Revisar lógica
+  - ¿Muestra error? → Verificar mensaje
+  - ¿Eliminación en cascada? → Verificar integridad
+
+
+-------------------------------------------
+1.3 MÓDULO DE GESTIÓN DE EMPLEADOS (Admin/Empleados.php)
+-------------------------------------------
+
+TEST 1.3.1: Listar todos los empleados
+□ Acceder a /admin/empleados
+□ Verificar listado completo
+□ Verificar datos: nombre, apellido, especialidad, comisión, teléfono
+
+TEST 1.3.2: Buscar empleado por nombre
+□ Ingresar nombre en buscador
+□ Verificar filtro correcto
+
+TEST 1.3.3: Buscar empleado por especialidad
+□ Ingresar especialidad (ej: "Barbero")
+□ Verificar filtro correcto
+
+TEST 1.3.4: Crear nuevo empleado
+□ Ir a /admin/empleados/crear
+□ Completar todos los campos:
+  - Nombre, apellido, teléfono
+  - Email válido y único
+  - Especialidad
+  - Comisión (porcentaje)
+  - Fecha de contratación
+  - Password (mín 8 caracteres)
+□ Verificar creación en "usuarios" con rol "empleado"
+□ Verificar creación en "empleados"
+□ Verificar mensaje de éxito
+
+TEST 1.3.5: Crear empleado con comisión inválida
+□ Intentar crear con comisión negativa → Error
+□ Intentar crear con comisión > 100% → Error
+□ Verificar validación
+
+TEST 1.3.6: Editar empleado existente
+□ Modificar especialidad y comisión
+□ Verificar actualización en BD
+□ Verificar mensaje de éxito
+
+TEST 1.3.7: Eliminar empleado
+□ Eliminar empleado sin citas
+□ Verificar eliminación en BD
+□ Verificar mensaje de éxito
+
+TEST 1.3.8: Eliminar empleado con citas asociadas
+□ Intentar eliminar empleado con citas
+□ Verificar comportamiento y mensajes
+
+
+-------------------------------------------
+1.4 MÓDULO DE GESTIÓN DE SERVICIOS (Admin/Servicios.php)
+-------------------------------------------
+
+TEST 1.4.1: Listar todos los servicios
+□ Acceder a /admin/servicios
+□ Verificar listado completo
+□ Verificar datos: nombre, descripción, precio, duración, estado
+
+TEST 1.4.2: Buscar servicio por nombre
+□ Ingresar nombre de servicio
+□ Verificar filtro correcto
+
+TEST 1.4.3: Crear nuevo servicio
+□ Ir a /admin/servicios/crear
+□ Completar campos:
+  - Nombre (3-100 caracteres, único)
+  - Descripción
+  - Precio (mayor a 0, decimal)
+  - Duración (múltiplos de 20: 20, 40, 60, etc.)
+  - Activo (checkbox)
+□ Verificar creación en BD
+□ Verificar mensaje de éxito
+
+TEST 1.4.4: Crear servicio con nombre duplicado
+□ Intentar crear servicio con nombre ya existente
+□ Verificar mensaje de error: "El nombre ya existe"
+□ Verificar que NO se crea
+
+TEST 1.4.5: Crear servicio con precio negativo
+□ Intentar crear con precio <= 0
+□ Verificar error de validación
+
+TEST 1.4.6: Crear servicio con duración inválida
+□ Intentar crear con duración que NO sea múltiplo de 20
+□ Verificar error de validación
+
+TEST 1.4.7: Editar servicio existente
+□ Modificar precio y duración
+□ Verificar actualización en BD
+
+TEST 1.4.8: Desactivar/activar servicio
+□ Cambiar estado de "Activo" a "Inactivo"
+□ Verificar que NO aparece en formulario de agendar cita (cliente)
+□ Reactivar servicio
+□ Verificar que vuelve a aparecer
+
+TEST 1.4.9: Eliminar servicio
+□ Eliminar servicio sin citas asociadas
+□ Verificar eliminación en BD
+
+TEST 1.4.10: Eliminar servicio con citas asociadas
+□ Intentar eliminar servicio usado en citas
+□ Verificar comportamiento
+
+
+-------------------------------------------
+1.5 MÓDULO DE GESTIÓN DE CITAS - ADMINISTRADOR (Admin/Citas.php)
+-------------------------------------------
+
+TEST 1.5.1: Ver calendario de citas
+□ Acceder a /admin/citas
+□ Verificar visualización de calendario (FullCalendar)
+□ Verificar que se muestran todas las citas
+□ Verificar colores por estado:
+  - Pendiente: amarillo/naranja
+  - Confirmada: azul
+  - En proceso: morado
+  - Completada: verde
+  - Cancelada: rojo
+
+TEST 1.5.2: Crear nueva cita desde admin
+□ Hacer clic en "Nueva cita"
+□ Seleccionar cliente (dropdown)
+□ Seleccionar servicio (dropdown)
+□ Seleccionar empleado (dropdown)
+□ Seleccionar fecha (datepicker)
+□ Seleccionar hora de inicio (timepicker)
+□ Verificar cálculo automático de hora_fin (inicio + duración servicio)
+□ Agregar notas (opcional)
+□ Guardar cita
+□ Verificar creación en BD
+□ Verificar aparición en calendario
+
+TEST 1.5.3: Crear cita con horario no disponible (empleado ocupado)
+□ Intentar crear cita en horario donde empleado ya tiene otra cita
+□ Verificar mensaje de error: "El empleado no está disponible en este horario"
+□ Verificar que NO se crea la cita
+
+TEST 1.5.4: Editar cita existente
+□ Hacer clic en cita en calendario
+□ Modificar hora, empleado o servicio
+□ Guardar cambios
+□ Verificar actualización en BD
+□ Verificar actualización en calendario
+
+TEST 1.5.5: Cambiar estado de cita: Pendiente → Confirmada
+□ Seleccionar cita pendiente
+□ Cambiar estado a "Confirmada"
+□ Verificar actualización en BD
+□ Verificar cambio de color en calendario
+
+TEST 1.5.6: Cambiar estado de cita: Confirmada → En proceso
+□ Cambiar estado a "En proceso"
+□ Verificar actualización
+
+TEST 1.5.7: Cambiar estado de cita: En proceso → Completada
+□ Cambiar estado a "Completada"
+□ Verificar actualización
+
+TEST 1.5.8: Cancelar cita
+□ Cambiar estado a "Cancelada"
+□ Verificar que aparece con color rojo
+□ Verificar actualización en BD
+
+TEST 1.5.9: Eliminar cita
+□ Eliminar cita desde calendario
+□ Confirmar eliminación
+□ Verificar eliminación en BD
+
+TEST 1.5.10: Filtrar citas por empleado
+□ Seleccionar empleado en filtro
+□ Verificar que solo se muestran citas de ese empleado
+
+TEST 1.5.11: Filtrar citas por estado
+□ Seleccionar estado (ej: "Completadas")
+□ Verificar filtro correcto
+
+TEST 1.5.12: Filtrar citas por rango de fechas
+□ Seleccionar fecha inicio y fecha fin
+□ Aplicar filtro
+□ Verificar que solo se muestran citas en ese rango
+
+TEST 1.5.13: Obtener horarios disponibles (AJAX)
+□ Abrir formulario de nueva cita
+□ Seleccionar empleado y fecha
+□ Verificar que se cargan solo horarios disponibles
+□ Verificar que horarios ocupados NO aparecen
+
+TEST 1.5.14: Estadísticas de citas en dashboard
+□ Ir a /admin/dashboard
+□ Verificar contador de:
+  - Total de citas
+  - Citas pendientes
+  - Citas confirmadas
+  - Citas completadas
+  - Citas canceladas
+□ Verificar que números coinciden con BD
+
+
+-------------------------------------------
+1.6 MÓDULO DE GESTIÓN DE CITAS - CLIENTE (Cliente/Citas.php)
+-------------------------------------------
+
+TEST 1.6.1: Ver formulario de agendar cita
+□ Acceder a /cliente/agendar como cliente
+□ Verificar que aparecen solo servicios activos
+□ Verificar que aparecen todos los empleados
+
+TEST 1.6.2: Agendar nueva cita como cliente
+□ Seleccionar servicio
+□ Seleccionar empleado
+□ Seleccionar fecha (calendario)
+□ Verificar carga de horarios disponibles vía AJAX
+□ Seleccionar hora disponible
+□ Agregar notas (opcional)
+□ Guardar cita
+□ Verificar creación en BD con id_cliente correcto
+□ Verificar estado inicial "pendiente"
+□ Verificar mensaje de éxito
+
+TEST 1.6.3: Intentar agendar en horario no disponible
+□ Seleccionar horario ocupado (si aparece)
+□ Verificar mensaje de error
+□ Verificar que NO se crea la cita
+
+TEST 1.6.4: Ver mis citas como cliente
+□ Ir a /cliente/mis-citas
+□ Verificar que se muestran solo citas del cliente logueado
+□ Verificar datos: servicio, empleado, fecha, hora, estado
+
+TEST 1.6.5: Cancelar mi cita como cliente
+□ Hacer clic en "Cancelar" en una cita pendiente o confirmada
+□ Confirmar cancelación
+□ Verificar cambio de estado a "cancelada" en BD
+□ Verificar mensaje de éxito
+
+TEST 1.6.6: Intentar cancelar cita ya completada
+□ Intentar cancelar cita con estado "completada"
+□ Verificar mensaje de error: "No se puede cancelar una cita completada"
+□ Verificar que NO se cambia el estado
+
+TEST 1.6.7: Ver próximas citas en dashboard
+□ Ir a /cliente/dashboard
+□ Verificar que se muestran próximas citas (futuras)
+□ Verificar ordenamiento por fecha ascendente
+
+TEST 1.6.8: Ver historial de citas
+□ Verificar que se muestran citas pasadas
+□ Verificar ordenamiento por fecha descendente
+
+
+-------------------------------------------
+1.7 MÓDULO DE GESTIÓN DE CITAS - EMPLEADO (Empleado/Citas.php)
+-------------------------------------------
+
+TEST 1.7.1: Ver mis citas asignadas como empleado
+□ Acceder a /empleado/citas como empleado
+□ Verificar que se muestran solo citas asignadas a ese empleado
+□ Verificar datos: cliente, servicio, fecha, hora, estado
+
+TEST 1.7.2: Ver citas del día en dashboard
+□ Ir a /empleado/dashboard
+□ Verificar que se muestran solo citas del día actual
+□ Verificar contador de citas del día
+
+TEST 1.7.3: Actualizar estado de cita: Pendiente → En proceso
+□ Seleccionar cita pendiente
+□ Cambiar estado a "En proceso"
+□ Verificar actualización en BD
+
+TEST 1.7.4: Actualizar estado de cita: En proceso → Completada
+□ Cambiar estado a "Completada"
+□ Verificar actualización
+
+TEST 1.7.5: Ver agenda semanal
+□ Ir a /empleado/agenda
+□ Verificar visualización de agenda semanal
+□ Verificar que se muestran citas de lunes a domingo
+□ Verificar ordenamiento por día y hora
+
+
+-------------------------------------------
+1.8 MÓDULO DE REPORTES (Admin/Reportes.php)
+-------------------------------------------
+
+TEST 1.8.1: Generar reporte general
+□ Ir a /admin/reportes
+□ Seleccionar rango de fechas
+□ Generar reporte
+□ Verificar estadísticas:
+  - Total de citas
+  - Citas completadas
+  - Citas canceladas
+  - Ingresos totales
+  - Citas por estado
+
+TEST 1.8.2: Generar reporte por empleado
+□ Seleccionar empleado específico
+□ Seleccionar rango de fechas
+□ Generar reporte
+□ Verificar:
+  - Total de citas del empleado
+  - Citas completadas
+  - Ingresos generados
+  - Comisiones ganadas
+
+TEST 1.8.3: Generar reporte por servicio
+□ Generar reporte de servicios más solicitados
+□ Verificar listado ordenado por cantidad de citas
+□ Verificar datos: servicio, cantidad, ingresos
+
+TEST 1.8.4: Exportar reporte a PDF
+□ Generar reporte
+□ Hacer clic en "Exportar a PDF"
+□ Verificar descarga de archivo PDF
+□ Abrir PDF y verificar:
+  - Encabezado con logo/nombre de barbería
+  - Título del reporte
+  - Rango de fechas
+  - Tabla con datos correctos
+  - Formato legible
+  - Total al final
+
+TEST 1.8.5: Exportar reporte a Excel
+□ Hacer clic en "Exportar a Excel"
+□ Verificar descarga de archivo .xlsx
+□ Abrir Excel y verificar datos correctos
+
+TEST 1.8.6: Listado de citas realizadas
+□ Ir a sección "Citas Realizadas"
+□ Verificar listado de citas completadas
+□ Verificar datos: cliente, empleado, servicio, fecha, precio
+
+TEST 1.8.7: Listado de citas pendientes
+□ Ir a sección "Citas Pendientes"
+□ Verificar listado de citas con estado "pendiente"
+
+
+-------------------------------------------
+1.9 MÓDULO DE PERFIL DE CLIENTE (Cliente/Perfil.php)
+-------------------------------------------
+
+TEST 1.9.1: Ver perfil de cliente
+□ Ir a /cliente/perfil
+□ Verificar datos actuales: nombre, apellido, teléfono, email, etc.
+
+TEST 1.9.2: Actualizar información de perfil
+□ Modificar nombre, teléfono, dirección
+□ Guardar cambios
+□ Verificar actualización en BD
+□ Verificar mensaje de éxito
+
+TEST 1.9.3: Actualizar perfil con email duplicado
+□ Intentar cambiar email a uno ya registrado
+□ Verificar mensaje de error
+□ Verificar que NO se actualiza
+
+
+-------------------------------------------
+1.10 DASHBOARDS
+-------------------------------------------
+
+TEST 1.10.1: Dashboard de Administrador
+□ Acceder a /admin/dashboard
+□ Verificar widgets/tarjetas con estadísticas:
+  - Total de clientes
+  - Total de empleados
+  - Total de servicios
+  - Total de citas (hoy, semana, mes)
+  - Ingresos del día/semana/mes
+  - Gráficas (si existen)
+
+TEST 1.10.2: Dashboard de Cliente
+□ Acceder a /cliente/dashboard
+□ Verificar información:
+  - Próximas citas
+  - Historial reciente
+  - Botón "Agendar nueva cita"
+
+TEST 1.10.3: Dashboard de Empleado
+□ Acceder a /empleado/dashboard
+□ Verificar información:
+  - Citas del día
+  - Próximas citas
+  - Estadísticas personales (si existen)
+
+
+================================================================================
+2. PRUEBAS DE SEGURIDAD Y AUTENTICACIÓN
+================================================================================
+
+2.1 CONTROL DE ACCESO Y AUTORIZACIÓN
+-------------------------------------------
+
+TEST 2.1.1: Acceso sin autenticación
+□ Cerrar sesión (logout)
+□ Intentar acceder a /admin/dashboard directamente
+□ Verificar redirección automática a /login
+□ Intentar acceder a /cliente/agendar
+□ Verificar redirección a /login
+□ Intentar acceder a /empleado/citas
+□ Verificar redirección a /login
+
+TEST 2.1.2: Acceso a rutas de otro rol
+□ Iniciar sesión como CLIENTE
+□ Intentar acceder a /admin/clientes directamente (URL)
+□ Verificar redirección o mensaje de error: "No autorizado"
+□ Intentar acceder a /empleado/agenda
+□ Verificar bloqueo de acceso
+
+TEST 2.1.3: Acceso a rutas de admin como empleado
+□ Iniciar sesión como EMPLEADO
+□ Intentar acceder a /admin/empleados
+□ Verificar bloqueo de acceso
+
+TEST 2.1.4: Acceso a rutas de admin como cliente
+□ Iniciar sesión como CLIENTE
+□ Intentar acceder a /admin/servicios
+□ Verificar bloqueo de acceso
+
+TEST 2.1.5: Verificación de filtros (AuthFilter, AdminFilter, etc.)
+□ Revisar app/Config/Filters.php
+□ Verificar que todas las rutas protegidas tienen filtro apropiado
+□ Verificar que filtros están aplicados correctamente
+
+TEST 2.1.6: Bypass de filtros mediante manipulación de sesión
+□ Iniciar sesión como cliente
+□ Intentar modificar $_SESSION['usuario_rol'] manualmente (dev tools)
+□ Verificar que filtros validan contra BD, no solo sesión
+
+
+2.2 INYECCIÓN SQL
+-------------------------------------------
+
+TEST 2.2.1: Inyección SQL en login
+□ Intentar login con:
+  - Email: admin' OR '1'='1
+  - Password: cualquiera
+□ Verificar que NO permite acceso
+□ Verificar uso de Query Builder o prepared statements
+
+TEST 2.2.2: Inyección SQL en búsquedas
+□ Buscar cliente con: ' OR '1'='1
+□ Verificar que NO retorna todos los registros
+□ Verificar protección contra SQLi
+
+TEST 2.2.3: Inyección SQL en parámetros GET/POST
+□ Intentar: /admin/clientes/editar/1' OR '1'='1
+□ Verificar que NO ejecuta código malicioso
+□ Verificar sanitización de parámetros
+
+TEST 2.2.4: Revisar código fuente
+□ Buscar uso de Query Builder en modelos
+□ Verificar que NO hay concatenación directa de SQL
+□ Verificar uso de $this->db->query() con bindings
+
+
+2.3 CROSS-SITE SCRIPTING (XSS)
+-------------------------------------------
+
+TEST 2.3.1: XSS en formulario de creación de cliente
+□ Crear cliente con nombre: <script>alert('XSS')</script>
+□ Visualizar listado de clientes
+□ Verificar que script NO se ejecuta
+□ Verificar que se escapa HTML (esc() o htmlspecialchars)
+
+TEST 2.3.2: XSS en notas de cita
+□ Crear cita con notas: <img src=x onerror="alert('XSS')">
+□ Visualizar cita
+□ Verificar que código NO se ejecuta
+
+TEST 2.3.3: XSS reflejado en búsquedas
+□ Buscar: <script>alert('XSS')</script>
+□ Verificar que NO se ejecuta en resultados
+
+TEST 2.3.4: Revisar vistas (app/Views/)
+□ Verificar uso de función esc() en todas las salidas de datos
+□ Ejemplo correcto: <?= esc($cliente['nombre']) ?>
+□ Ejemplo INCORRECTO: <?= $cliente['nombre'] ?>
+
+
+2.4 CROSS-SITE REQUEST FORGERY (CSRF)
+-------------------------------------------
+
+TEST 2.4.1: Verificar CSRF en formularios
+□ Abrir código fuente de formulario de crear cliente
+□ Verificar presencia de token CSRF:
+  - <?= csrf_field() ?>
+  - <input type="hidden" name="csrf_token_name" value="...">
+
+TEST 2.4.2: Envío de formulario sin token CSRF
+□ Crear formulario externo sin token
+□ Enviar POST a /admin/clientes/guardar
+□ Verificar que se rechaza la petición
+□ Verificar mensaje de error CSRF
+
+TEST 2.4.3: Reutilización de token CSRF
+□ Capturar token de un formulario
+□ Enviar múltiples peticiones con el mismo token
+□ Verificar que token se regenera después de uso
+
+
+2.5 GESTIÓN DE CONTRASEÑAS
+-------------------------------------------
+
+TEST 2.5.1: Verificar hashing de contraseñas
+□ Acceder a BD y ver tabla "usuarios"
+□ Verificar que campo "password" está hasheado (bcrypt)
+□ Ejemplo: $2y$10$... (60 caracteres)
+□ Verificar que NO hay contraseñas en texto plano
+
+TEST 2.5.2: Fortaleza de contraseñas
+□ Intentar crear usuario con password de 4 caracteres
+□ Verificar rechazo (mínimo 8 caracteres)
+□ Intentar con password débil: "12345678"
+□ Verificar si hay validación de fortaleza (mayúsculas, números, especiales)
+
+TEST 2.5.3: Comparación de contraseñas
+□ Revisar código de login (Auth::intentarLogin)
+□ Verificar uso de password_verify() para comparar
+□ Verificar que NO se comparan hashes directamente con ==
+
+TEST 2.5.4: Recuperación de contraseña
+□ Intentar proceso de "Olvidé mi contraseña"
+□ Verificar que NO se envía contraseña en texto plano
+□ Verificar generación de token temporal
+□ Verificar expiración de token
+
+
+2.6 GESTIÓN DE SESIONES
+-------------------------------------------
+
+TEST 2.6.1: Configuración de sesiones
+□ Revisar app/Config/App.php
+□ Verificar:
+  - sessionDriver = 'CodeIgniter\Session\Handlers\FileHandler'
+  - sessionCookieName
+  - sessionExpiration (tiempo razonable, ej: 7200 segundos)
+  - sessionSavePath
+
+TEST 2.6.2: Expiración de sesión
+□ Iniciar sesión
+□ Esperar tiempo de expiración configurado
+□ Intentar realizar acción
+□ Verificar redirección a login
+
+TEST 2.6.3: Sesión fijada (Session Fixation)
+□ Obtener ID de sesión antes de login
+□ Hacer login
+□ Verificar que ID de sesión cambió (session_regenerate_id)
+
+TEST 2.6.4: Sesiones concurrentes
+□ Iniciar sesión en navegador 1
+□ Iniciar sesión con mismo usuario en navegador 2
+□ Verificar comportamiento:
+  - ¿Se cierra sesión en navegador 1?
+  - ¿Se permite múltiples sesiones?
+
+
+2.7 VALIDACIÓN DE ARCHIVOS (si aplica)
+-------------------------------------------
+
+TEST 2.7.1: Subida de archivos con extensión peligrosa
+□ Si existe subida de archivos (fotos de perfil, etc.)
+□ Intentar subir archivo: malware.php
+□ Verificar rechazo
+□ Verificar whitelist de extensiones permitidas
+
+TEST 2.7.2: Subida de archivo con tamaño excesivo
+□ Intentar subir archivo de 100 MB
+□ Verificar límite de tamaño (ej: 2 MB)
+
+
+2.8 EXPOSICIÓN DE INFORMACIÓN SENSIBLE
+-------------------------------------------
+
+TEST 2.8.1: Mensajes de error detallados
+□ Provocar error en producción
+□ Verificar que NO se muestran mensajes detallados de BD
+□ Verificar que NO se muestran stack traces
+□ Revisar app/Config/Boot/production.php
+
+TEST 2.8.2: Listado de directorios
+□ Intentar acceder a /writable/
+□ Verificar que NO se listan archivos
+□ Verificar presencia de index.html vacío
+
+TEST 2.8.3: Archivos sensibles accesibles
+□ Intentar acceder a:
+  - /.env (debe estar bloqueado)
+  - /composer.json (debe estar bloqueado)
+  - /app/Config/Database.php (debe estar bloqueado)
+□ Verificar código 403 Forbidden
+
+
+2.9 RATE LIMITING
+-------------------------------------------
+
+TEST 2.9.1: Intentos de login masivos (Brute Force)
+□ Intentar login con password incorrecta 50 veces
+□ Verificar si hay bloqueo temporal
+□ Verificar si hay CAPTCHA después de X intentos
+□ Verificar si se registran intentos en log
+
+
+2.10 AUDITORÍA Y LOGGING
+-------------------------------------------
+
+TEST 2.10.1: Registro de acciones críticas
+□ Crear, editar, eliminar cliente
+□ Verificar registro en logs (writable/logs/)
+□ Verificar información: usuario, acción, timestamp, IP
+
+TEST 2.10.2: Registro de intentos de login
+□ Hacer login exitoso y fallido
+□ Verificar registro en logs
+
+
+================================================================================
+3. PRUEBAS DE VALIDACIÓN DE DATOS
+================================================================================
+
+3.1 VALIDACIÓN DE FORMULARIOS
+-------------------------------------------
+
+TEST 3.1.1: Campos requeridos en creación de cliente
+□ Enviar formulario sin nombre
+□ Verificar mensaje de error: "El campo nombre es requerido"
+□ Enviar sin apellido
+□ Verificar mensaje de error
+□ Enviar sin email
+□ Verificar mensaje de error
+
+TEST 3.1.2: Validación de formato de email
+□ Ingresar email inválido: "noesuncorreo"
+□ Verificar mensaje: "Ingrese un email válido"
+□ Ingresar: email@
+□ Verificar validación
+□ Ingresar: @dominio.com
+□ Verificar validación
+
+TEST 3.1.3: Validación de longitud de campos
+□ Ingresar nombre de 2 caracteres
+□ Verificar error: "El nombre debe tener mínimo 3 caracteres"
+□ Ingresar nombre de 150 caracteres
+□ Verificar error de máximo
+
+TEST 3.1.4: Validación de formato de teléfono
+□ Ingresar teléfono con letras: "abc123"
+□ Verificar error: "El teléfono debe contener solo números"
+□ Ingresar teléfono de 5 dígitos
+□ Verificar error: "Mínimo 7 dígitos"
+
+TEST 3.1.5: Validación de fecha de nacimiento
+□ Ingresar fecha futura
+□ Verificar error: "La fecha no puede ser futura"
+□ Ingresar fecha con edad < 18 años
+□ Verificar validación (si aplica)
+
+TEST 3.1.6: Validación de precio de servicio
+□ Ingresar precio negativo
+□ Verificar error
+□ Ingresar precio con más de 2 decimales: 15.999
+□ Verificar redondeo o validación
+□ Ingresar texto en precio
+□ Verificar error
+
+TEST 3.1.7: Validación de duración de servicio
+□ Ingresar 15 minutos
+□ Verificar error: "Debe ser múltiplo de 20"
+□ Ingresar 33 minutos
+□ Verificar error
+
+TEST 3.1.8: Validación de rango de fechas en reportes
+□ Ingresar fecha_fin anterior a fecha_inicio
+□ Verificar error: "La fecha de fin debe ser posterior a la fecha de inicio"
+
+
+3.2 VALIDACIÓN DE DATOS EN BACKEND
+-------------------------------------------
+
+TEST 3.2.1: Validación del lado del servidor
+□ Deshabilitar JavaScript en navegador
+□ Enviar formulario con datos inválidos
+□ Verificar que validación del servidor sigue funcionando
+
+TEST 3.2.2: Manipulación de valores de dropdown
+□ Enviar valor de "id_empleado" que no existe en BD
+□ Verificar error: "Empleado no válido"
+
+TEST 3.2.3: Envío de tipos de datos incorrectos
+□ Enviar texto en campo numérico vía API/POST
+□ Verificar rechazo y validación
+
+
+3.3 SANITIZACIÓN DE DATOS
+-------------------------------------------
+
+TEST 3.3.1: Espacios en blanco al inicio/fin
+□ Crear cliente con nombre: "  Juan  "
+□ Verificar que se guarda sin espacios: "Juan" (trim)
+
+TEST 3.3.2: Caracteres especiales en campos de texto
+□ Ingresar nombre con caracteres especiales: "<>'\"
+□ Verificar escape correcto al mostrar
+
+
+================================================================================
+4. PRUEBAS DE BASE DE DATOS E INTEGRIDAD
+================================================================================
+
+4.1 INTEGRIDAD REFERENCIAL
+-------------------------------------------
+
+TEST 4.1.1: Claves foráneas configuradas
+□ Revisar estructura de BD (barberia_db.sql)
+□ Verificar que existen FOREIGN KEY:
+  - clientes.id_usuario → usuarios.id_usuario
+  - empleados.id_usuario → usuarios.id_usuario
+  - citas.id_cliente → clientes.id_cliente
+  - citas.id_empleado → empleados.id_empleado
+  - citas.id_servicio → servicios.id_servicio
+
+TEST 4.1.2: Eliminación en cascada
+□ Eliminar usuario que tiene registro de cliente
+□ Verificar comportamiento:
+  - ON DELETE CASCADE → Se elimina cliente automáticamente
+  - ON DELETE RESTRICT → Se rechaza eliminación
+  - ON DELETE SET NULL → Se establece NULL en FK
+
+TEST 4.1.3: Inserción de FK inexistente
+□ Intentar insertar cita con id_cliente = 999 (no existe)
+□ Verificar error de BD o validación en modelo
+
+TEST 4.1.4: Actualización de PK con FK dependientes
+□ Intentar actualizar id_usuario en tabla usuarios
+□ Verificar que FK en clientes se actualizan (ON UPDATE CASCADE)
+  o se rechaza la operación
+
+
+4.2 RESTRICCIONES DE BD
+-------------------------------------------
+
+TEST 4.2.1: Unicidad de email
+□ Intentar insertar dos usuarios con mismo email
+□ Verificar error: "Duplicate entry for key 'email'"
+
+TEST 4.2.2: Valores NOT NULL
+□ Intentar insertar cliente sin nombre (NULL)
+□ Verificar error de BD
+
+TEST 4.2.3: Valores ENUM
+□ Intentar insertar cita con estado = "otro"
+□ Verificar error: "Invalid value for ENUM"
+
+TEST 4.2.4: Valores DEFAULT
+□ Crear usuario sin especificar "activo"
+□ Verificar que se establece valor por defecto: 1
+
+
+4.3 TRANSACCIONES
+-------------------------------------------
+
+TEST 4.3.1: Creación de usuario + cliente (transacción)
+□ Revisar método crear() en ClienteModel
+□ Verificar uso de transacciones:
+  - $this->db->transStart();
+  - Insertar en "usuarios"
+  - Insertar en "clientes"
+  - $this->db->transComplete();
+□ Provocar error en segunda inserción
+□ Verificar rollback: usuario NO se crea si cliente falla
+
+TEST 4.3.2: Eliminación de cliente + usuario (transacción)
+□ Eliminar cliente
+□ Verificar que usuario también se elimina
+□ Si falla una operación, verificar rollback
+
+
+4.4 OPTIMIZACIÓN Y RENDIMIENTO DE BD
+-------------------------------------------
+
+TEST 4.4.1: Índices en columnas de búsqueda
+□ Revisar estructura de BD
+□ Verificar índices en:
+  - usuarios.email (búsqueda frecuente)
+  - clientes.telefono (búsqueda frecuente)
+  - citas.fecha_cita (filtros de reportes)
+  - citas.estado (filtros frecuentes)
+
+TEST 4.4.2: Consultas lentas
+□ Revisar log de slow queries
+□ Ejecutar EXPLAIN en consultas complejas
+□ Verificar que se usan índices
+
+
+4.5 RESPALDO Y RECUPERACIÓN
+-------------------------------------------
+
+TEST 4.5.1: Respaldo de BD
+□ Ejecutar: mysqldump barberia_db > backup.sql
+□ Verificar creación de archivo
+□ Verificar que contiene todos los datos
+
+TEST 4.5.2: Restauración de BD
+□ Eliminar BD: DROP DATABASE barberia_db
+□ Restaurar: mysql -u root -p barberia_db < backup.sql
+□ Verificar que datos se restauraron correctamente
+
+
+================================================================================
+5. PRUEBAS DE INTERFAZ DE USUARIO (UI/UX)
+================================================================================
+
+5.1 USABILIDAD
+-------------------------------------------
+
+TEST 5.1.1: Navegación intuitiva
+□ Verificar menú de navegación visible en todas las páginas
+□ Verificar enlaces funcionando correctamente
+□ Verificar breadcrumbs (si existen)
+
+TEST 5.1.2: Mensajes de éxito y error claros
+□ Crear cliente exitosamente
+□ Verificar mensaje: "Cliente creado exitosamente" (visible, verde)
+□ Intentar crear con error
+□ Verificar mensaje de error (visible, rojo)
+
+TEST 5.1.3: Confirmaciones antes de acciones destructivas
+□ Eliminar cliente
+□ Verificar modal de confirmación: "¿Está seguro?"
+□ Cancelar acción
+□ Verificar que NO se elimina
+
+TEST 5.1.4: Indicadores de carga (loading)
+□ Enviar formulario de creación de cita
+□ Verificar indicador de carga (spinner, barra de progreso)
+□ Verificar deshabilitación de botón para evitar doble clic
+
+TEST 5.1.5: Tooltips y ayudas contextuales
+□ Verificar tooltips en iconos de acciones
+□ Verificar textos de ayuda en formularios complejos
+
+
+5.2 DISEÑO RESPONSIVO
+-------------------------------------------
+
+TEST 5.2.1: Visualización en móvil (320px - 480px)
+□ Abrir en Chrome DevTools → Dispositivos móviles
+□ Verificar que menú se convierte en hamburguesa
+□ Verificar que tablas son scrollables o responsivas
+□ Verificar que formularios son usables
+□ Verificar que botones son clickeables (tamaño mínimo 44px)
+
+TEST 5.2.2: Visualización en tablet (768px - 1024px)
+□ Verificar layout adaptado
+□ Verificar que calendario de citas se visualiza correctamente
+
+TEST 5.2.3: Visualización en desktop (1920px+)
+□ Verificar que elementos no se estiran excesivamente
+□ Verificar max-width en contenedores
+
+
+5.3 ACCESIBILIDAD (A11Y)
+-------------------------------------------
+
+TEST 5.3.1: Navegación con teclado
+□ Usar solo teclado (Tab, Enter, Esc)
+□ Verificar que se puede completar formulario sin mouse
+□ Verificar que focus es visible (outline)
+
+TEST 5.3.2: Contraste de colores
+□ Usar herramienta: WebAIM Contrast Checker
+□ Verificar contraste mínimo 4.5:1 en textos
+□ Verificar legibilidad de textos en fondos de colores
+
+TEST 5.3.3: Etiquetas ARIA
+□ Revisar código HTML
+□ Verificar atributos aria-label en iconos
+□ Verificar role en elementos interactivos
+
+TEST 5.3.4: Alt text en imágenes
+□ Verificar que todas las imágenes tienen atributo alt
+
+TEST 5.3.5: Prueba con lector de pantalla
+□ Usar NVDA o JAWS
+□ Verificar que se leen correctamente formularios y tablas
+
+
+5.4 COMPATIBILIDAD DE NAVEGADORES
+-------------------------------------------
+
+TEST 5.4.1: Google Chrome (última versión)
+□ Probar todas las funcionalidades
+□ Verificar que CSS y JS funcionan correctamente
+
+TEST 5.4.2: Mozilla Firefox (última versión)
+□ Probar todas las funcionalidades
+□ Verificar compatibilidad
+
+TEST 5.4.3: Microsoft Edge (última versión)
+□ Probar todas las funcionalidades
+
+TEST 5.4.4: Safari (macOS/iOS)
+□ Si es posible, probar en Safari
+□ Verificar formularios y datepickers
+
+TEST 5.4.5: Navegadores móviles
+□ Chrome Mobile
+□ Safari Mobile
+
+
+5.5 VALIDACIÓN DE FORMULARIOS EN CLIENTE
+-------------------------------------------
+
+TEST 5.5.1: Validación HTML5
+□ Verificar atributos: required, type="email", min, max
+□ Verificar que navegador muestra mensajes nativos
+
+TEST 5.5.2: Validación con JavaScript
+□ Verificar validación en tiempo real (blur, keyup)
+□ Verificar mensajes de error debajo de campos
+
+
+================================================================================
+6. PRUEBAS DE RENDIMIENTO
+================================================================================
+
+6.1 TIEMPO DE CARGA
+-------------------------------------------
+
+TEST 6.1.1: Tiempo de carga de página de inicio
+□ Usar Chrome DevTools → Network
+□ Cargar página de inicio
+□ Verificar que carga en < 3 segundos
+
+TEST 6.1.2: Tiempo de carga de dashboard con datos
+□ Cargar /admin/dashboard con 100+ citas
+□ Verificar tiempo de respuesta < 2 segundos
+
+TEST 6.1.3: Tiempo de carga de calendario de citas
+□ Cargar /admin/citas con 200+ citas
+□ Verificar que calendario carga en < 5 segundos
+
+
+6.2 OPTIMIZACIÓN DE RECURSOS
+-------------------------------------------
+
+TEST 6.2.1: Tamaño de archivos CSS
+□ Verificar que CSS está minificado en producción
+□ Verificar tamaño < 200 KB
+
+TEST 6.2.2: Tamaño de archivos JS
+□ Verificar que JS está minificado
+□ Verificar tamaño < 500 KB
+
+TEST 6.2.3: Optimización de imágenes
+□ Verificar que imágenes están comprimidas
+□ Verificar formatos modernos (WebP, si aplica)
+
+TEST 6.2.4: Caché de navegador
+□ Revisar headers HTTP
+□ Verificar Cache-Control para archivos estáticos
+
+
+6.3 CONSULTAS A BASE DE DATOS
+-------------------------------------------
+
+TEST 6.3.1: Número de queries por página
+□ Activar Query Builder logging
+□ Cargar página de dashboard
+□ Verificar número de queries (idealmente < 10)
+□ Identificar queries N+1
+
+TEST 6.3.2: Tiempo de ejecución de queries
+□ Ejecutar query de reporte complejo
+□ Verificar que tarda < 1 segundo
+□ Si tarda más, optimizar con índices o reescribir query
+
+
+6.4 PRUEBAS DE CARGA
+-------------------------------------------
+
+TEST 6.4.1: Usuarios concurrentes (herramienta: Apache JMeter)
+□ Simular 50 usuarios accediendo simultáneamente
+□ Verificar que servidor responde sin errores
+□ Verificar tiempo de respuesta promedio
+
+TEST 6.4.2: Peticiones por segundo
+□ Simular 100 peticiones por segundo
+□ Verificar que servidor no colapsa
+
+
+================================================================================
+7. PRUEBAS DE INTEGRACIÓN
+================================================================================
+
+7.1 FLUJOS COMPLETOS
+-------------------------------------------
+
+TEST 7.1.1: Flujo completo de registro y agendar cita
+□ Registrarse como nuevo cliente
+□ Verificar email de bienvenida (si aplica)
+□ Iniciar sesión
+□ Agendar nueva cita
+□ Verificar email de confirmación (si aplica)
+□ Ver cita en "Mis citas"
+□ Verificar que admin ve la cita en calendario
+
+TEST 7.1.2: Flujo completo de gestión de cita por empleado
+□ Admin crea cita para empleado
+□ Empleado inicia sesión
+□ Ve cita en "Mis citas del día"
+□ Cambia estado a "En proceso"
+□ Cambia estado a "Completada"
+□ Verificar actualización en dashboard de admin
+
+TEST 7.1.3: Flujo completo de reporte
+□ Admin crea múltiples citas en diferentes fechas
+□ Marca algunas como completadas
+□ Va a módulo de reportes
+□ Genera reporte de un mes
+□ Exporta a PDF
+□ Verifica que PDF contiene datos correctos
+
+
+7.2 INTEGRACIÓN CON NOTIFICACIONES
+-------------------------------------------
+
+TEST 7.2.1: Envío de notificación al crear cita
+□ Admin crea cita para cliente
+□ Verificar llamada a enviar_notificacion_cita()
+□ Verificar log de notificación en BD (si existe tabla)
+□ Verificar envío de email (revisar logs/email)
+
+TEST 7.2.2: Envío de notificación al confirmar cita
+□ Admin cambia estado a "Confirmada"
+□ Verificar envío de notificación
+
+
+7.3 INTEGRACIÓN CON API EXTERNA (si aplica)
+-------------------------------------------
+
+TEST 7.3.1: Envío de email vía servicio externo
+□ Si usa SendGrid, Mailgun, etc.
+□ Verificar configuración en .env
+□ Crear cita y verificar email recibido
+
+
+================================================================================
+8. PRUEBAS DE REPORTES Y EXPORTACIÓN
+================================================================================
+
+8.1 GENERACIÓN DE PDF
+-------------------------------------------
+
+TEST 8.1.1: PDF de reporte general
+□ Generar reporte con rango de 1 mes
+□ Exportar a PDF
+□ Verificar:
+  - Encabezado con nombre de empresa
+  - Título: "Reporte de Citas"
+  - Rango de fechas
+  - Tabla con columnas: Cliente, Empleado, Servicio, Fecha, Estado, Precio
+  - Totales al final
+  - Pie de página con número de página
+
+TEST 8.1.2: PDF de reporte por empleado
+□ Generar reporte de empleado específico
+□ Exportar a PDF
+□ Verificar datos correctos
+
+TEST 8.1.3: PDF con muchos registros (paginación)
+□ Generar reporte con 200+ citas
+□ Exportar a PDF
+□ Verificar que tablas continúan en múltiples páginas
+□ Verificar que encabezado se repite en cada página
+
+TEST 8.1.4: Formato y estilo del PDF
+□ Verificar fuentes legibles
+□ Verificar alineación de textos
+□ Verificar bordes de tabla
+□ Verificar colores (si aplica)
+
+
+8.2 GENERACIÓN DE EXCEL
+-------------------------------------------
+
+TEST 8.2.1: Exportar reporte a Excel
+□ Generar reporte
+□ Exportar a Excel
+□ Abrir en Excel/LibreOffice
+□ Verificar:
+  - Encabezados en primera fila
+  - Datos correctos
+  - Formato de celdas (fechas, números)
+  - Totales calculados
+
+TEST 8.2.2: Excel con fórmulas
+□ Verificar si columna "Total" usa fórmula SUM
+□ Verificar cálculos correctos
+
+
+================================================================================
+9. PRUEBAS DE COMPATIBILIDAD
+================================================================================
+
+9.1 VERSIONES DE PHP
+-------------------------------------------
+
+TEST 9.1.1: PHP 8.0
+□ Ejecutar aplicación en PHP 8.0
+□ Verificar que no hay errores de compatibilidad
+
+TEST 9.1.2: PHP 8.1
+□ Ejecutar aplicación en PHP 8.1
+□ Verificar funcionamiento
+
+TEST 9.1.3: PHP 8.2
+□ Ejecutar aplicación en PHP 8.2
+□ Verificar funcionamiento
+
+
+9.2 VERSIONES DE CODEIGNITER 4
+-------------------------------------------
+
+TEST 9.2.1: Actualización de CodeIgniter
+□ Verificar versión actual en composer.json
+□ Actualizar a última versión estable
+□ Ejecutar composer update
+□ Probar funcionalidades principales
+□ Verificar que no hay breaking changes
+
+
+9.3 BASE DE DATOS
+-------------------------------------------
+
+TEST 9.3.1: MySQL 5.7
+□ Probar aplicación con MySQL 5.7
+□ Verificar que queries funcionan
+
+TEST 9.3.2: MySQL 8.0
+□ Probar aplicación con MySQL 8.0
+□ Verificar funcionamiento
+
+TEST 9.3.3: MariaDB 10.x
+□ Probar aplicación con MariaDB
+□ Verificar compatibilidad
+
+
+================================================================================
+10. PRUEBAS DE REGRESIÓN
+================================================================================
+
+10.1 DESPUÉS DE CADA CAMBIO
+-------------------------------------------
+
+TEST 10.1.1: Suite de pruebas básicas
+Después de cualquier modificación, ejecutar:
+□ Login con los 3 roles (admin, empleado, cliente)
+□ Crear un cliente
+□ Crear un servicio
+□ Crear una cita
+□ Ver calendario
+□ Generar un reporte
+□ Exportar a PDF
+
+TEST 10.1.2: Verificación de funcionalidades críticas
+□ Autenticación funciona
+□ CRUD de clientes funciona
+□ CRUD de empleados funciona
+□ CRUD de servicios funciona
+□ CRUD de citas funciona
+□ Reportes funcionan
+
+
+10.2 ANTES DE DEPLOY A PRODUCCIÓN
+-------------------------------------------
+
+TEST 10.2.1: Checklist de pre-deploy
+□ Ejecutar todas las pruebas funcionales
+□ Ejecutar pruebas de seguridad
+□ Verificar configuración de producción en .env
+□ Verificar que debugging está deshabilitado
+□ Realizar backup de BD
+□ Probar en entorno staging
+
+
+================================================================================
+11. CHECKLIST DE CALIDAD GENERAL
+================================================================================
+
+11.1 CÓDIGO
+-------------------------------------------
+□ Código sigue estándares PSR (PSR-1, PSR-12)
+□ Nombres de variables descriptivos
+□ Funciones y métodos con responsabilidad única
+□ Comentarios en código complejo
+□ No hay código comentado sin usar (limpiar)
+□ No hay console.log() en producción
+□ No hay var_dump() o print_r() en producción
+
+
+11.2 CONFIGURACIÓN
+-------------------------------------------
+□ Archivo .env correctamente configurado
+□ Valores sensibles NO están en control de versiones
+□ Base de datos configurada correctamente
+□ Zona horaria configurada (app/Config/App.php)
+□ Locales configurados (español, si aplica)
+□ Modo de desarrollo/producción correcto
+
+
+11.3 DOCUMENTACIÓN
+-------------------------------------------
+□ README.md con instrucciones de instalación
+□ Comentarios en funciones complejas
+□ Archivo de configuración de BD de ejemplo
+□ Documentación de API (si aplica)
+□ Changelog con versiones
+
+
+11.4 SEGURIDAD
+-------------------------------------------
+□ Todas las rutas protegidas tienen filtro
+□ Passwords hasheados con bcrypt
+□ CSRF habilitado en formularios
+□ XSS prevenido con esc()
+□ SQL injection prevenido con Query Builder
+□ Validación en servidor siempre presente
+
+
+11.5 BASE DE DATOS
+-------------------------------------------
+□ Migraciones creadas (si se usan)
+□ Seeders para datos de prueba
+□ Foreign keys configuradas
+□ Índices en columnas de búsqueda
+□ Backup automático configurado (recomendado)
+
+
+11.6 FRONTEND
+-------------------------------------------
+□ Diseño responsivo en móvil, tablet, desktop
+□ Mensajes de error y éxito claros
+□ Confirmaciones antes de eliminar
+□ Indicadores de carga (spinners)
+□ Validación de formularios en cliente
+
+
+11.7 RENDIMIENTO
+-------------------------------------------
+□ Queries optimizadas (sin N+1)
+□ CSS y JS minificados en producción
+□ Imágenes optimizadas
+□ Caché habilitado para archivos estáticos
+□ Paginación en listados largos
+
+
+================================================================================
+12. HERRAMIENTAS RECOMENDADAS PARA TESTING
+================================================================================
+
+12.1 PRUEBAS AUTOMATIZADAS
+-------------------------------------------
+
+12.1.1 PHPUnit (Unit Testing)
+- Instalación: composer require --dev phpunit/phpunit
+- Crear pruebas unitarias para modelos
+- Ejemplo: tests/Models/ClienteModelTest.php
+- Ejecutar: ./vendor/bin/phpunit
+
+12.1.2 CodeIgniter Testing
+- CI4 incluye traits para testing
+- Usar DatabaseTestCase para pruebas con BD
+- Usar FeatureTestCase para pruebas de controladores
+
+12.1.3 Selenium (Pruebas E2E)
+- Automatizar pruebas de navegador
+- Simular interacción de usuario real
+
+
+12.2 SEGURIDAD
+-------------------------------------------
+
+12.2.1 OWASP ZAP (Zed Attack Proxy)
+- Escaneo automático de vulnerabilidades
+- Detección de XSS, SQLi, CSRF
+- URL: https://www.zaproxy.org/
+
+12.2.2 SQLMap
+- Pruebas de inyección SQL
+- Comando: sqlmap -u "http://localhost/gestion_citas/login" --forms
+
+12.2.3 Burp Suite (Community Edition)
+- Interceptar peticiones HTTP
+- Analizar flujo de autenticación
+- Detectar vulnerabilidades
+
+
+12.3 RENDIMIENTO
+-------------------------------------------
+
+12.3.1 Apache JMeter
+- Pruebas de carga
+- Simular múltiples usuarios concurrentes
+- URL: https://jmeter.apache.org/
+
+12.3.2 Google Lighthouse
+- Auditoría de rendimiento, accesibilidad, SEO
+- Integrado en Chrome DevTools
+
+12.3.3 GTmetrix
+- Análisis de velocidad de carga
+- Recomendaciones de optimización
+- URL: https://gtmetrix.com/
+
+
+12.4 CALIDAD DE CÓDIGO
+-------------------------------------------
+
+12.4.1 PHP CodeSniffer
+- Verificar estándares de código PSR
+- Instalación: composer require --dev squizlabs/php_codesniffer
+- Ejecutar: ./vendor/bin/phpcs app/
+
+12.4.2 PHP Mess Detector (PHPMD)
+- Detectar código complejo o problemático
+- Instalación: composer require --dev phpmd/phpmd
+
+12.4.3 PHPStan
+- Análisis estático de código
+- Detectar errores antes de ejecución
+
+
+12.5 DEBUGGING
+-------------------------------------------
+
+12.5.1 Xdebug
+- Depuración paso a paso
+- Profiling de rendimiento
+- Coverage de pruebas
+
+12.5.2 Kint (ya incluido en CI4)
+- Debugging avanzado
+- Uso: d($variable); dd($variable);
+
+
+12.6 BASE DE DATOS
+-------------------------------------------
+
+12.6.1 MySQL Workbench
+- Diseño de diagramas ER
+- Optimización de queries
+- Gestión de BD
+
+12.6.2 phpMyAdmin
+- Interfaz web para gestionar BD
+- Ejecutar queries manuales
+
+
+12.7 INTERFAZ DE USUARIO
+-------------------------------------------
+
+12.7.1 Chrome DevTools
+- Inspeccionar elementos
+- Network, Console, Performance
+- Responsive Design Mode
+
+12.7.2 WAVE (Web Accessibility Evaluation Tool)
+- Evaluar accesibilidad
+- Extensión de Chrome
+- URL: https://wave.webaim.org/
+
+12.7.3 axe DevTools
+- Auditoría de accesibilidad
+- Extensión de navegador
+
+
+12.8 MONITOREO
+-------------------------------------------
+
+12.8.1 New Relic (versión gratuita)
+- Monitoreo de rendimiento en producción
+- Detección de errores
+
+12.8.2 Sentry
+- Tracking de errores en tiempo real
+- Integración con PHP
+
+
+================================================================================
+RESUMEN DE PRIORIDADES
+================================================================================
+
+PRIORIDAD ALTA (Críticas):
+1. Pruebas de seguridad (Sección 2)
+   - Control de acceso
+   - Inyección SQL
+   - XSS
+   - CSRF
+   - Gestión de contraseñas
+
+2. Pruebas funcionales de autenticación (1.1)
+   - Login/Logout
+   - Registro
+   - Cambio de contraseña
+
+3. Pruebas funcionales de citas (1.5, 1.6, 1.7)
+   - Crear, editar, eliminar citas
+   - Validación de horarios
+   - Gestión de estados
+
+4. Integridad de base de datos (4.1)
+   - Claves foráneas
+   - Restricciones
+
+
+PRIORIDAD MEDIA (Importantes):
+5. Pruebas de validación de datos (Sección 3)
+6. Pruebas de CRUD (1.2, 1.3, 1.4)
+7. Pruebas de reportes y PDF (Sección 8)
+8. Pruebas de usabilidad (5.1)
+9. Diseño responsivo (5.2)
+
+
+PRIORIDAD BAJA (Recomendadas):
+10. Pruebas de rendimiento (Sección 6)
+11. Accesibilidad (5.3)
+12. Compatibilidad de navegadores (5.4)
+13. Pruebas automatizadas con PHPUnit
+
+
+================================================================================
+METODOLOGÍA RECOMENDADA
+================================================================================
+
+1. SEMANA 1: Pruebas de Seguridad y Autenticación
+   - Ejecutar todas las pruebas de Sección 2
+   - Documentar errores encontrados
+   - Corregir vulnerabilidades críticas
+
+2. SEMANA 2: Pruebas Funcionales de Módulos Principales
+   - Ejecutar pruebas de Sección 1 (1.1 a 1.7)
+   - Probar flujos completos
+   - Corregir errores funcionales
+
+3. SEMANA 3: Pruebas de Validación y BD
+   - Ejecutar Sección 3 y Sección 4
+   - Verificar integridad de datos
+   - Optimizar queries
+
+4. SEMANA 4: Pruebas de UI/UX y Rendimiento
+   - Ejecutar Sección 5 y Sección 6
+   - Mejorar diseño responsivo
+   - Optimizar tiempos de carga
+
+5. SEMANA 5: Pruebas de Integración y Regresión
+   - Ejecutar Sección 7 y Sección 10
+   - Probar flujos completos
+   - Preparar para producción
+
+
+================================================================================
+REGISTRO DE PRUEBAS
+================================================================================
+
+Sugerencia: Crear una hoja de cálculo o usar herramienta como Trello/Jira
+para registrar:
+
+| ID Test | Descripción | Fecha | Ejecutado por | Resultado | Observaciones |
+|---------|-------------|-------|---------------|-----------|---------------|
+| 1.1.1   | Login exitoso| 26/12 | Equipo QA    | PASS      | OK           |
+| 2.1.1   | Acceso sin auth| 26/12| Equipo QA   | FAIL      | Corregir    |
+
+
+================================================================================
+FIN DEL DOCUMENTO
+================================================================================
+
+Este plan de pruebas ha sido generado específicamente para el Sistema de
+Gestión de Citas en CodeIgniter 4.
+
+Para cualquier consulta o ampliación de pruebas, contactar al equipo de
+desarrollo.
+
+Última actualización: 26 de Diciembre 2025
+Versión: 1.0

@@ -26,12 +26,26 @@ $routes->group('', function($routes) {
 });
 
 // ============================================
+// MANUAL DE USUARIO (ACCESO PÚBLICO)
+// ============================================
+
+$routes->get('manual', 'ManualController::descargar');
+
+// ============================================
 // RUTAS PROTEGIDAS CON AUTENTICACIÓN
 // ============================================
 
 $routes->group('', ['filter' => 'auth'], function($routes) {
     $routes->get('cambiar-password', 'Auth::cambiarPassword');
     $routes->post('actualizar-password', 'Auth::actualizarPassword');
+});
+
+// ============================================
+// RUTAS API (AJAX)
+// ============================================
+
+$routes->group('api', ['filter' => 'auth'], function($routes) {
+    $routes->get('clientes', 'Api\Clientes::listar');
 });
 
 // ============================================
@@ -75,10 +89,27 @@ $routes->group('admin', ['filter' => 'admin'], function($routes) {
 
     // Gestión de Citas
     $routes->get('citas', 'Admin\Citas::index');
+    $routes->get('citas/listado', 'Admin\Citas::listado');
+    $routes->get('citas/crear', 'Admin\Citas::crear');
+    $routes->post('citas/guardar', 'Admin\Citas::guardar');
+    $routes->get('citas/editar/(:num)', 'Admin\Citas::editar/$1');
+    $routes->post('citas/actualizar/(:num)', 'Admin\Citas::actualizar/$1');
+    $routes->get('citas/eliminar/(:num)', 'Admin\Citas::eliminar/$1');
     $routes->get('citas/ver/(:num)', 'Admin\Citas::ver/$1');
+    $routes->get('citas/obtener', 'Admin\Citas::obtenerCitas');
+    $routes->get('citas/horarios-disponibles', 'Admin\Citas::obtenerHorariosDisponibles');
+    $routes->post('citas/cambiar-estado/(:num)', 'Admin\Citas::cambiarEstado/$1');
+    $routes->get('citas/estadisticas', 'Admin\Citas::estadisticas');
 
     // Reportes
     $routes->get('reportes', 'Admin\Reportes::index');
+    $routes->get('reportes/por-fecha', 'Admin\Reportes::porFecha');
+    $routes->get('reportes/por-empleado', 'Admin\Reportes::porEmpleado');
+    $routes->get('reportes/por-servicio', 'Admin\Reportes::porServicio');
+    $routes->get('reportes/citas-realizadas', 'Admin\Reportes::citasRealizadas');
+    $routes->get('reportes/citas-pendientes', 'Admin\Reportes::citasPendientes');
+    $routes->get('reportes/exportarPDF', 'Admin\Reportes::exportarPDF');
+    $routes->get('reportes/exportarExcel', 'Admin\Reportes::exportarExcel');
 });
 
 // ============================================
@@ -87,8 +118,15 @@ $routes->group('admin', ['filter' => 'admin'], function($routes) {
 
 $routes->group('empleado', ['filter' => 'empleado'], function($routes) {
     $routes->get('dashboard', 'Empleado\Dashboard::index');
+
+    // Agenda
     $routes->get('agenda', 'Empleado\Agenda::index');
+    $routes->get('agenda/obtener', 'Empleado\Agenda::obtenerCitas');
+    $routes->get('agenda/semanal', 'Empleado\Agenda::semanal');
+
+    // Citas
     $routes->get('citas', 'Empleado\Citas::index');
+    $routes->get('citas/dia', 'Empleado\Citas::citasDelDia');
     $routes->get('citas/ver/(:num)', 'Empleado\Citas::ver/$1');
     $routes->post('citas/actualizar-estado/(:num)', 'Empleado\Citas::actualizarEstado/$1');
 });
@@ -99,11 +137,19 @@ $routes->group('empleado', ['filter' => 'empleado'], function($routes) {
 
 $routes->group('cliente', ['filter' => 'cliente'], function($routes) {
     $routes->get('dashboard', 'Cliente\Dashboard::index');
+
+    // Agendar Citas
     $routes->get('agendar', 'Cliente\Citas::agendar');
     $routes->post('agendar/guardar', 'Cliente\Citas::guardarCita');
+
+    // Mis Citas
     $routes->get('mis-citas', 'Cliente\Citas::index');
     $routes->get('citas/ver/(:num)', 'Cliente\Citas::ver/$1');
     $routes->get('citas/cancelar/(:num)', 'Cliente\Citas::cancelar/$1');
+    $routes->get('citas/horarios-disponibles', 'Cliente\Citas::obtenerHorariosDisponibles');
+    $routes->get('citas/proximas', 'Cliente\Citas::proximasCitas');
+
+    // Perfil
     $routes->get('perfil', 'Cliente\Perfil::index');
     $routes->post('perfil/actualizar', 'Cliente\Perfil::actualizar');
 });

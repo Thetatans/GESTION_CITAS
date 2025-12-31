@@ -6,6 +6,8 @@ namespace App\Controllers\Empleado;
 
 // Importar la clase base del controlador
 use App\Controllers\BaseController;
+use App\Models\CitasModel;
+use App\Models\EmpleadoModel;
 
 /**
  * Controlador Dashboard Empleado
@@ -27,6 +29,15 @@ use App\Controllers\BaseController;
  */
 class Dashboard extends BaseController
 {
+    protected $citasModel;
+    protected $empleadoModel;
+
+    public function __construct()
+    {
+        $this->citasModel = new CitasModel();
+        $this->empleadoModel = new EmpleadoModel();
+    }
+
     /**
      * Método index()
      *
@@ -35,12 +46,14 @@ class Dashboard extends BaseController
      * Proceso:
      * 1. Verifica que haya una sesión activa
      * 2. Verifica que el usuario sea empleado
-     * 3. Prepara los datos para la vista
-     * 4. Carga la vista del dashboard
+     * 3. Obtiene las citas del día del empleado
+     * 4. Prepara los datos para la vista
+     * 5. Carga la vista del dashboard
      *
      * Datos enviados a la vista:
      * - titulo: Título de la página
      * - usuario_nombre: Email del empleado
+     * - citas_hoy: Citas del empleado para hoy
      *
      * @return \CodeIgniter\HTTP\RedirectResponse|string Redirección si falla o vista si es exitoso
      */
@@ -65,17 +78,29 @@ class Dashboard extends BaseController
                            ->with('error', 'No tienes permisos para acceder a esta sección');
         }
 
-        // PASO 3: PREPARAR DATOS PARA LA VISTA
+        // PASO 3: OBTENER CITAS DEL DÍA
+        $idUsuario = session()->get('usuario_id');
+        $empleado = $this->empleadoModel->where('id_usuario', $idUsuario)->first();
+
+        $citasHoy = [];
+        if ($empleado) {
+            $citasHoy = $this->citasModel->obtenerCitasDelDia($empleado['id_empleado']);
+        }
+
+        // PASO 4: PREPARAR DATOS PARA LA VISTA
         $data = [
             // Título que aparecerá en la página
             'titulo' => 'Dashboard Empleado',
 
             // Email del empleado para mostrar en el navbar
             // Se obtiene directamente de la sesión
-            'usuario_nombre' => session()->get('usuario_email')
+            'usuario_nombre' => session()->get('usuario_email'),
+
+            // Citas del día
+            'citas_hoy' => $citasHoy
         ];
 
-        // PASO 4: CARGAR Y RETORNAR LA VISTA
+        // PASO 5: CARGAR Y RETORNAR LA VISTA
         // view() es una función helper de CodeIgniter
         // Carga la vista ubicada en app/Views/empleado/dashboard.php
         // Le pasa el array $data con la información necesaria

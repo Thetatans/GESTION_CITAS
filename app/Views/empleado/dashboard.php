@@ -8,6 +8,22 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
 
+    <?php
+    // Función helper para obtener el color del badge según el estado
+    if (!function_exists('obtenerColorEstado')) {
+        function obtenerColorEstado($estado) {
+            $colores = [
+                'pendiente' => 'warning',
+                'confirmada' => 'info',
+                'en_proceso' => 'primary',
+                'completada' => 'success',
+                'cancelada' => 'danger'
+            ];
+            return $colores[$estado] ?? 'secondary';
+        }
+    }
+    ?>
+
     <style>
         :root {
             --azul-oscuro: #1e3a5f;
@@ -129,6 +145,9 @@
                 <span class="navbar-text text-white me-3">
                     <i class="bi bi-person-circle"></i> <?= esc($usuario_nombre) ?>
                 </span>
+                <a href="<?= base_url('manual') ?>" class="btn btn-outline-light btn-sm me-2" title="Descargar Manual de Usuario (PDF)">
+                    <i class="bi bi-file-earmark-pdf"></i> Manual PDF
+                </a>
                 <a href="<?= base_url('logout') ?>" class="btn btn-outline-light btn-sm">
                     <i class="bi bi-box-arrow-right"></i> Salir
                 </a>
@@ -138,11 +157,11 @@
 
     <div class="main-content">
         <div class="container mt-5">
-            <h1><i></i> <?= esc($titulo) ?></h1>
+            <h1><?= esc($titulo) ?></h1>
             <hr>
 
             <div class="alert alert-success">
-                <h4><i></i> ¡Bienvenido Empleado!</h4>
+                <h4>¡Bienvenido Empleado!</h4>
                 <p class="mb-0">Has iniciado sesión correctamente con rol de <strong>EMPLEADO</strong>.</p>
             </div>
 
@@ -150,7 +169,7 @@
                 <div class="col-md-6 mb-4">
                     <div class="card card-custom-1">
                         <div class="card-body text-center">
-                            <i></i>
+                            <i class="bi bi-calendar2-week"></i>
                             <h3>Mi Agenda</h3>
                             <a href="<?= base_url('empleado/agenda') ?>" class="btn btn-light btn-sm">
                                 Ver agenda
@@ -162,7 +181,7 @@
                 <div class="col-md-6 mb-4">
                     <div class="card card-custom-2">
                         <div class="card-body text-center">
-                            <i ></i>
+                            <i class="bi bi-calendar-check"></i>
                             <h3>Mis Citas</h3>
                             <a href="<?= base_url('empleado/citas') ?>" class="btn btn-light btn-sm">
                                 Ver citas
@@ -176,10 +195,71 @@
                 <div class="col-md-12">
                     <div class="card">
                         <div class="card-header">
-                            <h5 class="mb-0"> Citas de Hoy</h5>
+                            <h5 class="mb-0"><i class="bi bi-calendar-day"></i> Citas de Hoy - <?= date('d/m/Y') ?></h5>
                         </div>
                         <div class="card-body">
-                            <p class="text-muted text-center">No hay citas programadas para hoy</p>
+                            <?php if (empty($citas_hoy)): ?>
+                                <p class="text-muted text-center">No hay citas programadas para hoy</p>
+                            <?php else: ?>
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead style="background-color: var(--gris); color: white;">
+                                            <tr>
+                                                <th>Hora</th>
+                                                <th>Cliente</th>
+                                                <th>Servicio</th>
+                                                <th>Teléfono</th>
+                                                <th>Estado</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($citas_hoy as $cita): ?>
+                                                <tr id="cita-<?= $cita['id_cita'] ?>">
+                                                    <td><strong><?= date('g:i A', strtotime($cita['hora_inicio'])) ?></strong></td>
+                                                    <td><?= esc($cita['nombre_cliente'] . ' ' . $cita['apellido_cliente']) ?></td>
+                                                    <td><?= esc($cita['nombre_servicio']) ?></td>
+                                                    <td>
+                                                        <a href="tel:<?= esc($cita['telefono_cliente']) ?>" class="text-decoration-none">
+                                                            <i class="bi bi-telephone"></i> <?= esc($cita['telefono_cliente']) ?>
+                                                        </a>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-<?= obtenerColorEstado($cita['estado']) ?>" id="badge-<?= $cita['id_cita'] ?>">
+                                                            <?= ucfirst(str_replace('_', ' ', $cita['estado'])) ?>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <?php if ($cita['estado'] === 'pendiente'): ?>
+                                                            <button class="btn btn-sm btn-info" onclick="cambiarEstado(<?= $cita['id_cita'] ?>, 'confirmada')">
+                                                                <i class="bi bi-check-circle"></i> Confirmar
+                                                            </button>
+                                                            <button class="btn btn-sm btn-danger" onclick="cambiarEstado(<?= $cita['id_cita'] ?>, 'cancelada')">
+                                                                <i class="bi bi-x-circle"></i> Cancelar
+                                                            </button>
+                                                        <?php elseif ($cita['estado'] === 'confirmada'): ?>
+                                                            <button class="btn btn-sm btn-primary" onclick="cambiarEstado(<?= $cita['id_cita'] ?>, 'en_proceso')">
+                                                                <i class="bi bi-play-circle"></i> Iniciar
+                                                            </button>
+                                                            <button class="btn btn-sm btn-danger" onclick="cambiarEstado(<?= $cita['id_cita'] ?>, 'cancelada')">
+                                                                <i class="bi bi-x-circle"></i> Cancelar
+                                                            </button>
+                                                        <?php elseif ($cita['estado'] === 'en_proceso'): ?>
+                                                            <button class="btn btn-sm btn-success" onclick="cambiarEstado(<?= $cita['id_cita'] ?>, 'completada')">
+                                                                <i class="bi bi-check2-all"></i> Completar
+                                                            </button>
+                                                        <?php elseif ($cita['estado'] === 'completada'): ?>
+                                                            <span class="text-success"><i class="bi bi-check-circle-fill"></i> Finalizada</span>
+                                                        <?php elseif ($cita['estado'] === 'cancelada'): ?>
+                                                            <span class="text-danger"><i class="bi bi-x-circle-fill"></i> Cancelada</span>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -203,5 +283,61 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        /**
+         * Función para cambiar el estado de una cita
+         * @param {number} idCita - ID de la cita
+         * @param {string} nuevoEstado - Nuevo estado (confirmada, cancelada, en_proceso, completada)
+         */
+        function cambiarEstado(idCita, nuevoEstado) {
+            // Confirmar acción con el usuario
+            const mensajes = {
+                'confirmada': '¿Deseas confirmar esta cita?',
+                'cancelada': '¿Estás seguro de cancelar esta cita?',
+                'en_proceso': '¿Iniciar el servicio de esta cita?',
+                'completada': '¿Marcar esta cita como completada?'
+            };
+
+            if (!confirm(mensajes[nuevoEstado])) {
+                return;
+            }
+
+            // Deshabilitar botones para evitar múltiples clics
+            const fila = document.getElementById('cita-' + idCita);
+            const botones = fila.querySelectorAll('button');
+            botones.forEach(btn => btn.disabled = true);
+
+            // Enviar petición AJAX
+            fetch('<?= base_url('empleado/citas/actualizar-estado/') ?>' + idCita, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: 'estado=' + nuevoEstado
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Mostrar mensaje de éxito
+                    alert(data.message);
+                    // Recargar la página para mostrar los cambios
+                    location.reload();
+                } else {
+                    // Mostrar mensaje de error
+                    alert('Error: ' + data.message);
+                    // Rehabilitar botones
+                    botones.forEach(btn => btn.disabled = false);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al actualizar el estado de la cita');
+                // Rehabilitar botones
+                botones.forEach(btn => btn.disabled = false);
+            });
+        }
+    </script>
 </body>
 </html>
